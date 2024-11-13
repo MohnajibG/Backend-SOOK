@@ -1,51 +1,115 @@
-const express = require("express");
+// Importation des dépendances
+import express, { Request, Response } from "express";
+import uid2 from "uid2";
+import SHA256 from "crypto-js/sha256";
+import encBase64 from "crypto-js/enc-base64";
+import User, { IUser } from "../models/User"; // Assure-toi que IUser est bien importé depuis ton modèle User
+
+// Interface pour la requête de création d'utilisateur
+interface SignupRequestBody {
+  username: string;
+  email: string;
+  password: string;
+  confirmePassword: string;
+  avatar?: string; // si c'est optionnel
+  newsletter?: boolean; // si c'est optionnel
+}
+
+// Initialisation du routeur
 const router = express.Router();
 
-const uid2 = require("uid2");
-const SHA256 = require("crypto-js/sha256");
-const encBase64 = require("crypto-js/enc-base64");
+// Route pour la création d'un utilisateur
+router.post(
+  "/user/signup",
+  async (req: Request<{}, {}, SignupRequestBody>, res: Response) => {
+    const { username, email, password, confirmePassword, avatar, newsletter } =
+      req.body;
+    try {
+      // Validation des mots de passe
+      if (password !== confirmePassword) {
+        return res
+          .status(400)
+          .json({ message: "Les mots de passe ne sont pas identiques" });
+      }
+      // Validation des champs obligatoires
+      if (!username || !email || !password) {
+        return res.status(400).json({ message: "Paramètres manquants" });
+      }
 
-const User = require("../models/User");
+      // Vérification de l'existence de l'email
+      const user = await User.findOne({ email: email });
+      if (user) {
+        return res.status(409).json({ message: "L'email existe déjà" });
+      }
 
-router.post("user/signup", async (req: Request, res: Response) => {
-  const { username, email, password, confirmePassword } = req.body;
+      // Création des informations de sécurité
+      const salt = uid2(64);
+      const hash = SHA256(password + salt).toString(encBase64);
+      const token = uid2(64);
+
+      // Création d'un nouvel utilisateur
+      const newUser = new User<IUser>({
+        email: email,
+        account: {
+          username: username,
+          avatar: avatar,
+        },
+        newsletter: newsletter,
+        token: token,
+        hash: hash,
+        salt: salt,
+      });
+
+      // Sauvegarde de l'utilisateur dans la base de données
+      await newUser.save();
+
+      // Réponse au client
+      res.status(201).json({
+        _id: newUser._id,
+        token: newUser.token,
+        account: {
+          username: newUser.account.username,
+        },
+      });
+    } catch (error: any) {
+      console.log(error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
+
+// Route pour la connexion d'un utilisateur
+router.post("/user/login", async (req: Request, res: Response) => {
   try {
-    if (password !== confirmePassword) {
-      return res.status(400).json({ message: "Passwords not identique" });
+    // Recherche de l'utilisateur par email
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "Email ou mot de passe incorrect" });
     }
-    if (!username || !email || !password) {
-      return res.status(400).json({ message: "missing parameters" });
+
+    // Validation du mot de passe
+    const hashedPassword = SHA256(req.body.password + user.salt).toString(
+      encBase64
+    );
+    if (hashedPassword === user.hash) {
+      // Réponse en cas de succès
+      res.status(200).json({
+        _id: user._id,
+        token: user.token,
+        account: user.account,
+      });
+    } else {
+      // Réponse en cas d'erreur de mot de passe
+      return res
+        .status(400)
+        .json({ message: "Email ou mot de passe incorrect" });
     }
-    const user = await User.findOne({ email: email });
-    // console.log(user);
-    if (user) {
-      return res.status(409).json({ message: "email already exists" });
-    }
-    const salt = uid2(64);
-    const hash = SHA256(req.body.password + salt).toString(encBase64);
-    const token = uid2(64);
-    const newUser = new User({
-      email: email,
-      account: {
-        username: username,
-        avatar: req.body.avatar,
-      },
-      newsletter: req.body.newsletter,
-      token: token,
-      hash: hash,
-      salt: salt,
-    });
-    await newUser.save();
-    res.status(201).jjson({
-      _id: newUser._id,
-      token: newUser.token,
-      account: {
-        username: newUser.account.username,
-      },
-    });
-  } catch (error) {
+  } catch (error: any) {
     console.log(error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ message: error.message });
   }
 });
-module.exports = router;
+
+export default router;

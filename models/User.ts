@@ -1,26 +1,32 @@
-const mongoose = require("mongoose");
+import { Document, model, Schema } from "mongoose";
 
-type UserProps = {
+// Définir l'interface IUser
+interface IUser {
   email: string;
-};
-
-const User = mongoose.model("User", {
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-  },
   account: {
-    username: {
-      type: String,
-      required: true,
-    },
-    avatar: Object,
+    username: string;
+    avatar?: string;
+  };
+  newsletter?: boolean;
+  token: string;
+  hash: string;
+  salt: string;
+}
+
+// Définir le schéma de l'utilisateur en utilisant Mongoose
+const UserSchema = new Schema<IUser & Document>({
+  email: { type: String, required: true },
+  account: {
+    username: { type: String, required: true },
+    avatar: { type: String, default: null }, // Si l'avatar est optionnel, définir une valeur par défaut
   },
-  newslettre: Boolean,
-  token: String,
-  hash: String,
-  salt: String,
+  newsletter: { type: Boolean, default: false }, // Valeur par défaut si optionnel
+  token: { type: String, required: true },
+  hash: { type: String, required: true },
+  salt: { type: String, required: true },
 });
 
-module.exports = User;
+// Créer le modèle utilisateur
+const User = model<IUser & Document>("User", UserSchema);
+
+export default User;
