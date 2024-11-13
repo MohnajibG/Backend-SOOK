@@ -1,7 +1,7 @@
 import { Document, model, Schema } from "mongoose";
 
 // Définir l'interface IUser
-interface IUser {
+interface UserProps {
   email: string;
   account: {
     username: string;
@@ -14,7 +14,7 @@ interface IUser {
 }
 
 // Définir le schéma de l'utilisateur en utilisant Mongoose
-const UserSchema = new Schema<IUser & Document>({
+const UserSchema = new Schema<UserProps & Document>({
   email: { type: String, required: true },
   account: {
     username: { type: String, required: true },
@@ -27,6 +27,6 @@ const UserSchema = new Schema<IUser & Document>({
 });
 
 // Créer le modèle utilisateur
-const User = model<IUser & Document>("User", UserSchema);
+const User = model<UserProps & Document>("User", UserSchema);
 
 export default User;

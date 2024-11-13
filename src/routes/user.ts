@@ -3,7 +3,7 @@ import express, { Request, Response } from "express";
 import uid2 from "uid2";
 import SHA256 from "crypto-js/sha256";
 import encBase64 from "crypto-js/enc-base64";
-import User, { IUser } from "../models/User"; // Assure-toi que IUser est bien importé depuis ton modèle User
+import User, { UserProps } from "../models/User";
 
 // Interface pour la requête de création d'utilisateur
 interface SignupRequestBody {
@@ -21,7 +21,7 @@ const router = express.Router();
 // Route pour la création d'un utilisateur
 router.post(
   "/user/signup",
-  async (req: Request<{}, {}, SignupRequestBody>, res: Response) => {
+  async (req: Request<{}, {}, UserProps>, res: Response) => {
     const { username, email, password, confirmePassword, avatar, newsletter } =
       req.body;
     try {
@@ -48,7 +48,7 @@ router.post(
       const token = uid2(64);
 
       // Création d'un nouvel utilisateur
-      const newUser = new User<IUser>({
+      const newUser = new User<UserProps>({
         email: email,
         account: {
           username: username,
@@ -79,37 +79,40 @@ router.post(
 );
 
 // Route pour la connexion d'un utilisateur
-router.post("/user/login", async (req: Request, res: Response) => {
-  try {
-    // Recherche de l'utilisateur par email
-    const user = await User.findOne({ email: req.body.email });
-    if (!user) {
-      return res
-        .status(400)
-        .json({ message: "Email ou mot de passe incorrect" });
-    }
+router.post(
+  "/user/login",
+  async (req: Request<{}, {}, UserProps>, res: Response) => {
+    try {
+      // Recherche de l'utilisateur par email
+      const user = await User.findOne({ email: req.body.email });
+      if (!user) {
+        return res
+          .status(400)
+          .json({ message: "Email ou mot de passe incorrect" });
+      }
 
-    // Validation du mot de passe
-    const hashedPassword = SHA256(req.body.password + user.salt).toString(
-      encBase64
-    );
-    if (hashedPassword === user.hash) {
-      // Réponse en cas de succès
-      res.status(200).json({
-        _id: user._id,
-        token: user.token,
-        account: user.account,
-      });
-    } else {
-      // Réponse en cas d'erreur de mot de passe
-      return res
-        .status(400)
-        .json({ message: "Email ou mot de passe incorrect" });
+      // Validation du mot de passe
+      const hashedPassword = SHA256(req.body.password + user.salt).toString(
+        encBase64
+      );
+      if (hashedPassword === user.hash) {
+        // Réponse en cas de succès
+        res.status(200).json({
+          _id: user._id,
+          token: user.token,
+          account: user.account,
+        });
+      } else {
+        // Réponse en cas d'erreur de mot de passe
+        return res
+          .status(400)
+          .json({ message: "Email ou mot de passe incorrect" });
+      }
+    } catch (error: any) {
+      console.log(error);
+      return res.status(500).json({ message: error.message });
     }
-  } catch (error: any) {
-    console.log(error);
-    return res.status(500).json({ message: error.message });
   }
-});
+);
 
 export default router;
