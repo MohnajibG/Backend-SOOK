@@ -13,16 +13,20 @@
   "description": "",
   "devDependencies": {
     "@types/cors": "^2.8.17",
+    "@types/crypto-js": "^4.2.2",
     "@types/express": "^5.0.0",
     "@types/mongoose": "^5.11.96",
     "@types/node": "^22.9.0",
+    "@types/uid2": "^0.0.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3"
   },
   "dependencies": {
     "cors": "^2.8.5",
+    "crypto-js": "^4.2.0",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
-    "mongoos": "^0.0.1-security"
+    "mongoos": "^0.0.1-security",
+    "uid2": "^1.0.0"
   }
 }
