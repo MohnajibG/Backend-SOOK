@@ -1,7 +1,7 @@
 import { Document, model, Schema } from "mongoose";
 
 // Définir l'interface IUser
-interface UserProps {
+export interface UserProps {
   email: string;
   account: {
     username: string;

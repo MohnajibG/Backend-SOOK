@@ -2,6 +2,9 @@ import express, { Response, Request } from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 
+// Importe tes routes ici
+import userRoutes from "./routes/user";
+
 const app = express();
 app.use(express.json());
 app.use(cors());
@@ -22,10 +25,17 @@ const connectMongoDB = async () => {
 };
 connectMongoDB();
 
+// Utilise tes routes ici, avant la capture de toutes les requêtes
+app.use(userRoutes);
+app.get("/", (request: Request, response: Response) => {
+  response.status(200).send("Hello World");
+});
+
+// Pour capturer toutes les routes non trouvées
 app.all("*", (req: Request, res: Response) => {
-  res.status(404).json({ message: "Note Fond Vinted TS" });
+  res.status(404).json({ message: "Not Found Vinted TS" });
 });
 
 app.listen(process.env.PORT, () => {
-  console.log("Server STARTED 📡");
+  console.log(`Server STARTED 📡 on port ${process.env.PORT}`);
 });

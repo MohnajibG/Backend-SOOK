@@ -4,7 +4,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "init": "tsc --init",
     "build": "tsc",
+    "watch": "tsc -w",
     "start": "node dist/index.js"
   },
   "keywords": [],
