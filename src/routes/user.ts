@@ -95,7 +95,62 @@ const signupHandler = async (
   }
 };
 
-// Utilisation du middleware pour la route
+// Middleware pour la connexion d'un utilisateur
+const loginHandler = async (
+  req: Request<{}, {}, SignupRequestBody>, // Requête avec les données envoyées dans le corps (body) de la requête
+  res: Response // Réponse à envoyer au client
+) => {
+  try {
+    const { email, password } = req.body; // Récupère l'email et le mot de passe du corps de la requête
+
+    // Vérification de la validité de l'email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Expression régulière pour valider l'email
+    if (!emailRegex.test(email)) {
+      // Si l'email ne correspond pas au format
+      res.status(400).json({ message: "Email invalide." }); // Réponse avec un message d'erreur
+      return;
+    }
+
+    // Validation des champs obligatoires
+    if (!email || !password) {
+      // Si l'email ou le mot de passe est manquant
+      res.status(400).json({ message: "Parametres manquants" }); // Réponse avec un message d'erreur
+      return;
+    }
+
+    // Recherche de l'utilisateur par email dans la base de données
+    const user = await User.findOne({ email });
+    if (!user) {
+      // Si l'utilisateur n'est pas trouvé
+      res.status(400).json({ message: "Email incorrect." }); // Réponse avec un message d'erreur
+      return;
+    }
+
+    // Validation du mot de passe
+    const hashedPassword = SHA256(password + user.salt).toString(encBase64); // Hashage du mot de passe avec le sel
+    if (hashedPassword !== user.hash) {
+      // Si le mot de passe ne correspond pas
+      res.status(400).json({ message: "Mot de passe incorrect." }); // Réponse avec un message d'erreur
+      return;
+    } else {
+      // Réponse réussie avec les informations de l'utilisateur
+      res.status(200).json({
+        _id: user._id, // L'ID de l'utilisateur
+        token: user.token, // Le token de l'utilisateur
+        account: user.account, // Les informations du compte utilisateur
+      });
+    }
+  } catch (error: any) {
+    // Si une erreur se produit
+    console.error("Erreur lors de la connexion de l'utilisateur :", error); // Affiche l'erreur dans la console
+    res.status(500).json({ message: "Erreur interne du serveur." }); // Réponse avec un statut 500 (erreur serveur)
+  }
+};
+
+// Utilisation du middleware pour la route de création d'utilisateur
 router.post("/user/signup", signupHandler); // La route POST pour créer un utilisateur et appelle `signupHandler`
+
+// Utilisation du middleware pour la route de connexion d'utilisateur
+router.post("/user/login", loginHandler); // La route POST pour connecter un utilisateur et appelle `loginHandler`
 
 export default router; // Exportation du routeur pour l'utiliser dans d'autres fichiers
