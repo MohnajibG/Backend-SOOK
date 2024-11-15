@@ -5,9 +5,11 @@ export interface UserProps {
   email: string;
   account: {
     username: string;
-    avatar?: string;
+    avatar?: string; // Optionnel, pas besoin de valeur par défaut ici si tu la gères côté front-end
+    adress: string;
+    phoneNumber: string; // Utilisation de 'string' pour le numéro de téléphone
   };
-  newsletter?: boolean;
+  newsletter?: boolean; // Optionnel, la valeur par défaut est false
   token: string;
   hash: string;
   salt: string;
@@ -18,9 +20,11 @@ const UserSchema = new Schema<UserProps & Document>({
   email: { type: String, required: true },
   account: {
     username: { type: String, required: true },
-    avatar: { type: String, default: null }, // Si l'avatar est optionnel, définir une valeur par défaut
+    avatar: { type: String, default: null }, // Avatar optionnel avec valeur par défaut
+    adress: { type: String, required: true }, // Ajout de la validation pour l'adresse
+    phoneNumber: { type: String, required: true }, // 'phoneNumber' en tant que String
   },
-  newsletter: { type: Boolean, default: false }, // Valeur par défaut si optionnel
+  newsletter: { type: Boolean, default: false }, // Valeur par défaut pour 'newsletter'
   token: { type: String, required: true },
   hash: { type: String, required: true },
   salt: { type: String, required: true },

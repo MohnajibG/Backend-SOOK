@@ -1,5 +1,4 @@
-// Importation des modules nécessaires
-import express, { Request, Response, Router } from "express"; // Importation d'Express et des types nécessaires
+import express, { Request, Response, Router } from "express"; // Importation d'Express et des types nécessaires pour les requêtes et réponses
 import uid2 from "uid2"; // Importation du module `uid2` pour générer des tokens aléatoires
 import SHA256 from "crypto-js/sha256"; // Importation de la fonction de hashage SHA256 de `crypto-js`
 import encBase64 from "crypto-js/enc-base64"; // Importation de l'encodage Base64 pour convertir le hash en une chaîne lisible
@@ -13,6 +12,8 @@ interface SignupRequestBody {
   confirmePassword: string; // La confirmation du mot de passe
   avatar?: string; // L'avatar de l'utilisateur (facultatif)
   newsletter?: boolean; // Abonnement à la newsletter (facultatif)
+  adress: string;
+  phoneNumber: string;
 }
 
 // Initialisation du routeur d'Express
@@ -23,8 +24,16 @@ const signupHandler = async (
   req: Request<{}, {}, SignupRequestBody>, // Requête avec les données envoyées dans le corps (body) de la requête
   res: Response // Réponse à envoyer au client
 ) => {
-  const { username, email, password, confirmePassword, avatar, newsletter } =
-    req.body; // Déstructure les données du corps de la requête
+  const {
+    username,
+    email,
+    password,
+    confirmePassword,
+    avatar,
+    newsletter,
+    adress,
+    phoneNumber,
+  } = req.body; // Déstructure les données du corps de la requête
 
   try {
     // Validation des mots de passe
@@ -40,7 +49,7 @@ const signupHandler = async (
     if (!username || !email || !password) {
       // Si l'un des champs obligatoires est manquant
       res.status(400).json({ message: "Paramètres manquants." }); // Réponse avec un message d'erreur
-      return;
+      return; // Arrête l'exécution du middleware
     }
 
     // Vérification de la validité de l'email
@@ -48,7 +57,7 @@ const signupHandler = async (
     if (!emailRegex.test(email)) {
       // Si l'email ne correspond pas au format
       res.status(400).json({ message: "Email invalide." }); // Réponse avec un message d'erreur
-      return;
+      return; // Arrête l'exécution du middleware
     }
 
     // Vérification de l'existence de l'email dans la base de données
@@ -56,7 +65,7 @@ const signupHandler = async (
     if (user) {
       // Si un utilisateur est trouvé
       res.status(409).json({ message: "L'email existe déjà." }); // Réponse avec un message d'erreur (conflit)
-      return;
+      return; // Arrête l'exécution du middleware
     }
 
     // Création des informations de sécurité pour l'utilisateur
@@ -70,6 +79,8 @@ const signupHandler = async (
       account: {
         username: username, // Le nom d'utilisateur
         avatar: avatar, // L'avatar de l'utilisateur
+        adress: adress,
+        phoneNumber: phoneNumber,
       },
       newsletter: newsletter || false, // L'abonnement à la newsletter, défaut à `false` si non fourni
       token: token, // Le token généré pour l'utilisateur
@@ -108,22 +119,22 @@ const loginHandler = async (
     if (!emailRegex.test(email)) {
       // Si l'email ne correspond pas au format
       res.status(400).json({ message: "Email invalide." }); // Réponse avec un message d'erreur
-      return;
+      return; // Arrête l'exécution du middleware
     }
 
     // Validation des champs obligatoires
     if (!email || !password) {
       // Si l'email ou le mot de passe est manquant
-      res.status(400).json({ message: "Parametres manquants" }); // Réponse avec un message d'erreur
-      return;
+      res.status(400).json({ message: "Paramètres manquants." }); // Réponse avec un message d'erreur
+      return; // Arrête l'exécution du middleware
     }
 
     // Recherche de l'utilisateur par email dans la base de données
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }); // Recherche un utilisateur avec l'email donné
     if (!user) {
       // Si l'utilisateur n'est pas trouvé
       res.status(400).json({ message: "Email incorrect." }); // Réponse avec un message d'erreur
-      return;
+      return; // Arrête l'exécution du middleware
     }
 
     // Validation du mot de passe
@@ -131,7 +142,7 @@ const loginHandler = async (
     if (hashedPassword !== user.hash) {
       // Si le mot de passe ne correspond pas
       res.status(400).json({ message: "Mot de passe incorrect." }); // Réponse avec un message d'erreur
-      return;
+      return; // Arrête l'exécution du middleware
     } else {
       // Réponse réussie avec les informations de l'utilisateur
       res.status(200).json({

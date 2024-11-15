@@ -27,8 +27,8 @@ connectMongoDB();
 
 // Utilise tes routes ici, avant la capture de toutes les requêtes
 app.use(userRoutes);
-app.get("/", (request: Request, response: Response) => {
-  response.status(200).send("Hello World");
+app.get("/", (req: Request, res: Response) => {
+  res.status(200).json("Bienvenu dans Vinted TS de MNG");
 });
 
 // Pour capturer toutes les routes non trouvées
