@@ -1,10 +1,26 @@
-import express, { Request, Response, Router } from "express"; // Importation d'Express et des types nécessaires pour les requêtes et réponses
-import uid2 from "uid2"; // Importation du module `uid2` pour générer des tokens aléatoires
-import SHA256 from "crypto-js/sha256"; // Importation de la fonction de hashage SHA256 de `crypto-js`
-import encBase64 from "crypto-js/enc-base64"; // Importation de l'encodage Base64 pour convertir le hash en une chaîne lisible
-import User, { UserProps } from "../models/User"; // Importation du modèle `User` et de l'interface `UserProps` pour définir les propriétés d'un utilisateur
+import express, { Request, Response, Router } from "express";
+import uid2 from "uid2";
+import SHA256 from "crypto-js/sha256";
+import encBase64 from "crypto-js/enc-base64";
+import fileUpload from "express-fileupload";
+import cloudinary from "cloudinary";
+import User, { UserProps } from "../models/User";
 
-// Interface pour la requête de création d'utilisateur
+// Configuration de Cloudinary
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
+
+// Fonction utilitaire pour convertir un fichier en Base64
+const convertToBase64 = (file: fileUpload.UploadedFile): string => {
+  return `data:${file.mimetype};base64,${file.data.toString("base64")}`;
+};
+
+// Routeur pour gérer les routes de l'API utilisateur
+const router: Router = express.Router();
 interface SignupRequestBody {
   username: string; // Le nom d'utilisateur
   email: string; // L'email de l'utilisateur
@@ -12,156 +28,145 @@ interface SignupRequestBody {
   confirmePassword: string; // La confirmation du mot de passe
   avatar?: string; // L'avatar de l'utilisateur (facultatif)
   newsletter?: boolean; // Abonnement à la newsletter (facultatif)
-  adress: string;
+  address: string;
   phoneNumber: string;
 }
+interface UserSignupResponse {
+  _id: string; // L'identifiant de l'utilisateur créé.
+  token: string; // Le token d'authentification généré pour l'utilisateur.
+  account: {
+    username: string; // Le nom d'utilisateur de l'utilisateur.
+  };
+}
 
-// Initialisation du routeur d'Express
-const router: Router = express.Router(); // Création d'une instance de routeur pour gérer les routes
-
-// Middleware pour la création d'un utilisateur
+// Gestionnaire de création de compte utilisateur
 const signupHandler = async (
-  req: Request<{}, {}, SignupRequestBody>, // Requête avec les données envoyées dans le corps (body) de la requête
-  res: Response // Réponse à envoyer au client
-) => {
-  const {
-    username,
-    email,
-    password,
-    confirmePassword,
-    avatar,
-    newsletter,
-    adress,
-    phoneNumber,
-  } = req.body; // Déstructure les données du corps de la requête
+  req: Request<{}, {}, SignupRequestBody>,
+  res: Response<UserSignupResponse | { message: string }>
+): Promise<void> => {
+  // La fonction retourne 'void' (pas besoin de renvoyer une valeur)
+  const { username, email, password, confirmePassword, address, phoneNumber } =
+    req.body;
 
   try {
-    // Validation des mots de passe
+    // Validation des données d'inscription
     if (password !== confirmePassword) {
-      // Si le mot de passe et sa confirmation ne correspondent pas
       res
-        .status(400) // Envoie un statut 400 (Bad Request)
-        .json({ message: "Les mots de passe ne sont pas identiques." }); // Réponse avec un message d'erreur
-      return; // Arrête l'exécution du middleware
+        .status(400)
+        .json({ message: "Les mots de passe ne sont pas identiques." });
+      return; // On quitte la fonction sans retourner un objet, juste en envoyant la réponse
     }
 
-    // Validation des champs obligatoires
     if (!username || !email || !password) {
-      // Si l'un des champs obligatoires est manquant
-      res.status(400).json({ message: "Paramètres manquants." }); // Réponse avec un message d'erreur
-      return; // Arrête l'exécution du middleware
+      res.status(400).json({ message: "Paramètres manquants." });
+      return;
     }
 
-    // Vérification de la validité de l'email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Expression régulière pour valider l'email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      // Si l'email ne correspond pas au format
-      res.status(400).json({ message: "Email invalide." }); // Réponse avec un message d'erreur
-      return; // Arrête l'exécution du middleware
+      res.status(400).json({ message: "Email invalide." });
+      return;
     }
 
-    // Vérification de l'existence de l'email dans la base de données
-    const user = await User.findOne({ email: email }); // Recherche un utilisateur ayant cet email
+    // Vérification de l'existence de l'utilisateur
+    const user = await User.findOne({ email });
     if (user) {
-      // Si un utilisateur est trouvé
-      res.status(409).json({ message: "L'email existe déjà." }); // Réponse avec un message d'erreur (conflit)
-      return; // Arrête l'exécution du middleware
+      res.status(409).json({ message: "L'email existe déjà." });
+      return;
     }
 
-    // Création des informations de sécurité pour l'utilisateur
-    const salt = uid2(64); // Génère un sel aléatoire de 64 caractères pour le hashage
-    const hash = SHA256(password + salt).toString(encBase64); // Hashage du mot de passe avec le sel, puis encodage en Base64
-    const token = uid2(64); // Génère un token d'utilisateur de 64 caractères
+    // Génération des informations de sécurité
+    const salt = uid2(64);
+    const hash = SHA256(password + salt).toString(encBase64);
+    const token = uid2(64);
 
-    // Création d'un nouvel utilisateur avec les données
+    // Gestion de l'avatar si fourni
+    let avatarUrl: string | undefined;
+    if (req.files && req.files.avatar) {
+      const file = req.files.avatar;
+      const base64String = convertToBase64(file as fileUpload.UploadedFile);
+      const uploadResponse = await cloudinary.v2.uploader.upload(base64String);
+      avatarUrl = uploadResponse.secure_url;
+    }
+
+    // Création de l'utilisateur
     const newUser = new User<UserProps>({
-      email: email, // L'email de l'utilisateur
+      email: email,
       account: {
-        username: username, // Le nom d'utilisateur
-        avatar: avatar, // L'avatar de l'utilisateur
-        adress: adress,
+        username: username,
+        avatar: avatarUrl,
+        address: address,
         phoneNumber: phoneNumber,
       },
-      newsletter: newsletter || false, // L'abonnement à la newsletter, défaut à `false` si non fourni
-      token: token, // Le token généré pour l'utilisateur
-      hash: hash, // Le mot de passe hashé
-      salt: salt, // Le sel utilisé pour le hashage
+      newsletter: req.body.newsletter || false,
+      token: token,
+      hash: hash,
+      salt: salt,
     });
 
-    // Sauvegarde de l'utilisateur dans la base de données
-    await newUser.save(); // Sauvegarde du nouvel utilisateur
+    await newUser.save();
 
-    // Réponse au client avec les informations de l'utilisateur
+    // Réponse de succès
     res.status(201).json({
-      _id: newUser._id, // L'ID de l'utilisateur dans la base de données
-      token: newUser.token, // Le token généré pour l'utilisateur
+      _id: newUser._id as string,
+      token: newUser.token,
       account: {
-        username: newUser.account.username, // Le nom d'utilisateur
+        username: newUser.account.username,
       },
     });
   } catch (error: any) {
-    // Si une erreur se produit
-    console.error("Erreur lors de la création de l'utilisateur :", error); // Affiche l'erreur dans la console
-    res.status(500).json({ message: "Erreur interne du serveur." }); // Réponse avec un statut 500 (erreur serveur)
+    console.error("Erreur lors de la création de l'utilisateur :", error);
+    res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
 
-// Middleware pour la connexion d'un utilisateur
 const loginHandler = async (
-  req: Request<{}, {}, SignupRequestBody>, // Requête avec les données envoyées dans le corps (body) de la requête
-  res: Response // Réponse à envoyer au client
+  req: Request<{}, {}, SignupRequestBody>,
+  res: Response
 ) => {
   try {
-    const { email, password } = req.body; // Récupère l'email et le mot de passe du corps de la requête
+    const { email, password } = req.body;
 
-    // Vérification de la validité de l'email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Expression régulière pour valider l'email
+    // Validation des données de connexion
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      // Si l'email ne correspond pas au format
-      res.status(400).json({ message: "Email invalide." }); // Réponse avec un message d'erreur
-      return; // Arrête l'exécution du middleware
+      res.status(400).json({ message: "Email invalide." });
+      return;
     }
 
-    // Validation des champs obligatoires
     if (!email || !password) {
-      // Si l'email ou le mot de passe est manquant
-      res.status(400).json({ message: "Paramètres manquants." }); // Réponse avec un message d'erreur
-      return; // Arrête l'exécution du middleware
+      res.status(400).json({ message: "Paramètres manquants." });
+      return;
     }
 
-    // Recherche de l'utilisateur par email dans la base de données
-    const user = await User.findOne({ email }); // Recherche un utilisateur avec l'email donné
+    // Recherche de l'utilisateur
+    const user = await User.findOne({ email });
     if (!user) {
-      // Si l'utilisateur n'est pas trouvé
-      res.status(400).json({ message: "Email incorrect." }); // Réponse avec un message d'erreur
-      return; // Arrête l'exécution du middleware
+      res.status(400).json({ message: "Email incorrect." });
+      return;
     }
 
-    // Validation du mot de passe
-    const hashedPassword = SHA256(password + user.salt).toString(encBase64); // Hashage du mot de passe avec le sel
+    // Vérification du mot de passe
+    const hashedPassword = SHA256(password + user.salt).toString(encBase64);
     if (hashedPassword !== user.hash) {
-      // Si le mot de passe ne correspond pas
-      res.status(400).json({ message: "Mot de passe incorrect." }); // Réponse avec un message d'erreur
-      return; // Arrête l'exécution du middleware
-    } else {
-      // Réponse réussie avec les informations de l'utilisateur
-      res.status(200).json({
-        _id: user._id, // L'ID de l'utilisateur
-        token: user.token, // Le token de l'utilisateur
-        account: user.account, // Les informations du compte utilisateur
-      });
+      res.status(400).json({ message: "Mot de passe incorrect." });
+      return;
     }
+
+    // Réponse de succès
+    res.status(200).json({
+      _id: user._id,
+      token: user.token,
+      account: user.account,
+    });
   } catch (error: any) {
-    // Si une erreur se produit
-    console.error("Erreur lors de la connexion de l'utilisateur :", error); // Affiche l'erreur dans la console
-    res.status(500).json({ message: "Erreur interne du serveur." }); // Réponse avec un statut 500 (erreur serveur)
+    console.error("Erreur lors de la connexion de l'utilisateur :", error);
+    res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
 
-// Utilisation du middleware pour la route de création d'utilisateur
-router.post("/user/signup", signupHandler); // La route POST pour créer un utilisateur et appelle `signupHandler`
+// Routes d'inscription et de connexion
+router.post("/user/signup", fileUpload(), signupHandler);
+router.post("/user/login", loginHandler);
 
-// Utilisation du middleware pour la route de connexion d'utilisateur
-router.post("/user/login", loginHandler); // La route POST pour connecter un utilisateur et appelle `loginHandler`
-
-export default router; // Exportation du routeur pour l'utiliser dans d'autres fichiers
+export default router;

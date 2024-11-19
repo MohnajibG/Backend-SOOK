@@ -5,11 +5,11 @@ export interface UserProps {
   email: string;
   account: {
     username: string;
-    avatar?: string; // Optionnel, pas besoin de valeur par défaut ici si tu la gères côté front-end
-    adress: string;
+    avatar: string; // Optionnel, pas besoin de valeur par défaut ici si tu la gères côté front-end
+    address: string;
     phoneNumber: string; // Utilisation de 'string' pour le numéro de téléphone
   };
-  newsletter?: boolean; // Optionnel, la valeur par défaut est false
+  newsletter: boolean; // Optionnel, la valeur par défaut est false
   token: string;
   hash: string;
   salt: string;
