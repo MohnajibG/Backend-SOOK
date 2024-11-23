@@ -25,8 +25,8 @@ interface SignupRequestBody {
   username: string; // Le nom d'utilisateur
   email: string; // L'email de l'utilisateur
   password: string; // Le mot de passe de l'utilisateur
-  confirmePassword: string; // La confirmation du mot de passe
-  avatar?: string; // L'avatar de l'utilisateur (facultatif)
+  confirmPassword: string; // La confirmation du mot de passe
+  avatar: string; // L'avatar de l'utilisateur
   newsletter?: boolean; // Abonnement à la newsletter (facultatif)
   address: string;
   phoneNumber: string;
@@ -45,12 +45,12 @@ const signupHandler = async (
   res: Response<UserSignupResponse | { message: string }>
 ): Promise<void> => {
   // La fonction retourne 'void' (pas besoin de renvoyer une valeur)
-  const { username, email, password, confirmePassword, address, phoneNumber } =
+  const { username, email, password, confirmPassword, address, phoneNumber } =
     req.body;
 
   try {
     // Validation des données d'inscription
-    if (password !== confirmePassword) {
+    if (password !== confirmPassword) {
       res
         .status(400)
         .json({ message: "Les mots de passe ne sont pas identiques." });

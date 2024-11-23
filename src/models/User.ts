@@ -20,7 +20,7 @@ const UserSchema = new Schema<UserProps & Document>({
   email: { type: String, required: true },
   account: {
     username: { type: String, required: true },
-    avatar: { type: String, default: null }, // Avatar optionnel avec valeur par défaut
+    avatar: { type: String, required: true }, // Avatar optionnel avec valeur par défaut
     adress: { type: String, required: true }, // Ajout de la validation pour l'adresse
     phoneNumber: { type: String, required: true }, // 'phoneNumber' en tant que String
   },
