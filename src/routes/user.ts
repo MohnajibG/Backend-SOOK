@@ -156,8 +156,8 @@ const loginHandler = async (
     // Réponse de succès
     res.status(200).json({
       _id: user._id,
+      username: user.account.username,
       token: user.token,
-      account: user.account,
     });
   } catch (error: any) {
     console.error("Erreur lors de la connexion de l'utilisateur :", error);
