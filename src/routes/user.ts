@@ -33,7 +33,6 @@ const validateUserParams = (
     return "Les mots de passe ne correspondent pas.";
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) return "Email invalide.";
-  return null;
 };
 
 const handleAvatarUpload = async (avatar: fileUpload.UploadedFile) => {

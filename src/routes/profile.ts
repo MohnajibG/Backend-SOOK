@@ -14,7 +14,7 @@ const updateProfileHandler = async (
     const user = await updateUserData(
       req.params.userId,
       req.body,
-      req.files?.avatar as fileUpload.UploadedFile
+      req.files.avatar as fileUpload.UploadedFile
     );
 
     if (!user) {
