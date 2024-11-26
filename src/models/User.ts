@@ -1,36 +1,41 @@
-import { Document, model, Schema } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
-// Définir l'interface IUser
+// Define the TypeScript interface for the User properties
 export interface UserProps {
   email: string;
   account: {
     username: string;
-    avatar: string; // Optionnel, pas besoin de valeur par défaut ici si tu la gères côté front-end
-    address: string;
-    phoneNumber: string; // Utilisation de 'string' pour le numéro de téléphone
+    avatar?: string;
+
+    address: string; // Ensure address is defined here
+    phoneNumber: string; // Define phoneNumber here
+    country?: string; // Optional property
   };
-  newsletter: boolean; // Optionnel, la valeur par défaut est false
+  newsletter?: boolean;
   token: string;
   hash: string;
   salt: string;
+  _id: string;
 }
 
-// Définir le schéma de l'utilisateur en utilisant Mongoose
-const UserSchema = new Schema<UserProps & Document>({
+// Define the Mongoose schema for the User
+const UserSchema = new Schema<UserProps>({
   email: { type: String, required: true },
   account: {
     username: { type: String, required: true },
-    avatar: { type: String, required: true }, // Avatar optionnel avec valeur par défaut
-    adress: { type: String, required: true }, // Ajout de la validation pour l'adresse
-    phoneNumber: { type: String, required: true }, // 'phoneNumber' en tant que String
+    avatar: { type: String },
+
+    address: { type: String, required: true }, // Include address here
+    phoneNumber: { type: String, required: true }, // Include phoneNumber here
+    country: { type: String, required: true },
   },
-  newsletter: { type: Boolean, default: false }, // Valeur par défaut pour 'newsletter'
+  newsletter: { type: Boolean, default: false },
   token: { type: String, required: true },
   hash: { type: String, required: true },
   salt: { type: String, required: true },
 });
 
-// Créer le modèle utilisateur
-const User = model<UserProps & Document>("User", UserSchema);
+// Export the Mongoose model with the User interface
+const User = mongoose.model<UserProps & Document>("User", UserSchema);
 
 export default User;

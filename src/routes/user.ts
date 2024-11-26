@@ -4,118 +4,99 @@ import SHA256 from "crypto-js/sha256";
 import encBase64 from "crypto-js/enc-base64";
 import fileUpload from "express-fileupload";
 import cloudinary from "cloudinary";
+import isAuthenticated from "../middlewares/isAuthenticated";
+import updateUserData from "./updateUserData";
+
 import User, { UserProps } from "../models/User";
 
-// Configuration de Cloudinary
-cloudinary.v2.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-});
-
-// Fonction utilitaire pour convertir un fichier en Base64
-const convertToBase64 = (file: fileUpload.UploadedFile): string => {
-  return `data:${file.mimetype};base64,${file.data.toString("base64")}`;
-};
-
-// Routeur pour gérer les routes de l'API utilisateur
 const router: Router = express.Router();
-interface SignupRequestBody {
-  username: string; // Le nom d'utilisateur
-  email: string; // L'email de l'utilisateur
-  password: string; // Le mot de passe de l'utilisateur
-  confirmPassword: string; // La confirmation du mot de passe
-  avatar: string; // L'avatar de l'utilisateur
-  newsletter?: boolean; // Abonnement à la newsletter (facultatif)
+
+export interface SignupRequestBody {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  avatar?: string;
+  newsletter?: boolean;
   address: string;
   phoneNumber: string;
-}
-interface UserSignupResponse {
-  _id: string; // L'identifiant de l'utilisateur créé.
-  token: string; // Le token d'authentification généré pour l'utilisateur.
-  account: {
-    username: string; // Le nom d'utilisateur de l'utilisateur.
-  };
+  country: string;
 }
 
-// Gestionnaire de création de compte utilisateur
+const validateUserParams = (
+  email: string,
+  password: string,
+  confirmPassword: string
+) => {
+  if (!email || !password) return "Email et mot de passe sont requis.";
+  if (password !== confirmPassword)
+    return "Les mots de passe ne correspondent pas.";
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) return "Email invalide.";
+  return null;
+};
+
+const handleAvatarUpload = async (avatar: fileUpload.UploadedFile) => {
+  if (!avatar) return undefined;
+  const base64String = avatar.data.toString("base64");
+  const uploadResponse = await cloudinary.v2.uploader.upload(
+    `data:image/jpeg;base64,${base64String}`
+  );
+  return uploadResponse.secure_url;
+};
+
 const signupHandler = async (
   req: Request<{}, {}, SignupRequestBody>,
-  res: Response<UserSignupResponse | { message: string }>
+  res: Response
 ): Promise<void> => {
-  // La fonction retourne 'void' (pas besoin de renvoyer une valeur)
+  // Retourne void, pas un Response
   const { username, email, password, confirmPassword, address, phoneNumber } =
     req.body;
 
   try {
-    // Validation des données d'inscription
-    if (password !== confirmPassword) {
-      res
-        .status(400)
-        .json({ message: "Les mots de passe ne sont pas identiques." });
-      return; // On quitte la fonction sans retourner un objet, juste en envoyant la réponse
+    const validationError = validateUserParams(
+      email,
+      password,
+      confirmPassword
+    );
+    if (validationError) {
+      res.status(400).json({ message: validationError });
+      return; // Ajout d'un return pour éviter de continuer après l'envoi de la réponse
     }
 
-    if (!username || !email || !password) {
-      res.status(400).json({ message: "Paramètres manquants." });
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      res.status(409).json({ message: "Email déjà utilisé." });
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      res.status(400).json({ message: "Email invalide." });
-      return;
-    }
-
-    // Vérification de l'existence de l'utilisateur
-    const user = await User.findOne({ email });
-    if (user) {
-      res.status(409).json({ message: "L'email existe déjà." });
-      return;
-    }
-
-    // Génération des informations de sécurité
     const salt = uid2(64);
     const hash = SHA256(password + salt).toString(encBase64);
     const token = uid2(64);
 
-    // Gestion de l'avatar si fourni
-    let avatarUrl: string | undefined;
-    if (req.files && req.files.avatar) {
-      const file = req.files.avatar;
-      const base64String = convertToBase64(file as fileUpload.UploadedFile);
-      const uploadResponse = await cloudinary.v2.uploader.upload(base64String);
-      avatarUrl = uploadResponse.secure_url;
-    }
+    const avatarUrl = req.files?.avatar
+      ? await handleAvatarUpload(req.files.avatar as fileUpload.UploadedFile)
+      : undefined;
 
-    // Création de l'utilisateur
-    const newUser = new User<UserProps>({
-      email: email,
-      account: {
-        username: username,
-        avatar: avatarUrl,
-        address: address,
-        phoneNumber: phoneNumber,
-      },
+    const newUser = new User({
+      email,
+      account: { username, avatar: avatarUrl },
       newsletter: req.body.newsletter || false,
-      token: token,
-      hash: hash,
-      salt: salt,
+      token,
+      hash,
+      salt,
+      address,
+      phoneNumber,
     });
 
     await newUser.save();
-
-    // Réponse de succès
     res.status(201).json({
-      _id: newUser._id as string,
+      _id: newUser._id,
       token: newUser.token,
-      account: {
-        username: newUser.account.username,
-      },
+      account: { username: newUser.account.username },
     });
-  } catch (error: any) {
-    console.error("Erreur lors de la création de l'utilisateur :", error);
+  } catch (error) {
+    console.error("Erreur lors de l'inscription :", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
@@ -123,50 +104,107 @@ const signupHandler = async (
 const loginHandler = async (
   req: Request<{}, {}, SignupRequestBody>,
   res: Response
-) => {
+): Promise<void> => {
+  // Retourne void, pas un Response
+  const { email, password } = req.body;
+
   try {
-    const { email, password } = req.body;
-
-    // Validation des données de connexion
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      res.status(400).json({ message: "Email invalide." });
-      return;
+    const validationError = validateUserParams(email, password, password);
+    if (validationError) {
+      res.status(400).json({ message: validationError });
+      return; // Ajout d'un return pour éviter de continuer après l'envoi de la réponse
     }
 
-    if (!email || !password) {
-      res.status(400).json({ message: "Paramètres manquants." });
-      return;
-    }
-
-    // Recherche de l'utilisateur
     const user = await User.findOne({ email });
     if (!user) {
       res.status(400).json({ message: "Email incorrect." });
       return;
     }
 
-    // Vérification du mot de passe
     const hashedPassword = SHA256(password + user.salt).toString(encBase64);
     if (hashedPassword !== user.hash) {
       res.status(400).json({ message: "Mot de passe incorrect." });
       return;
     }
 
-    // Réponse de succès
     res.status(200).json({
       _id: user._id,
       username: user.account.username,
       token: user.token,
     });
-  } catch (error: any) {
-    console.error("Erreur lors de la connexion de l'utilisateur :", error);
+  } catch (error) {
+    console.error("Erreur lors de la connexion :", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
 
-// Routes d'inscription et de connexion
-router.post("/user/signup", fileUpload(), signupHandler);
+const updateProfileHandler = async (
+  req: Request<{ userId: string }, {}, Partial<UserProps["account"]>>,
+  res: Response
+): Promise<void> => {
+  try {
+    const user = await updateUserData(
+      req.params.userId,
+      req.body,
+      req.files?.avatar as fileUpload.UploadedFile
+    );
+
+    if (!user) {
+      res.status(404).json({ message: "Utilisateur non trouvé." });
+      return;
+    }
+
+    res.status(200).json({
+      message: "Profil mis à jour avec succès.",
+      user: {
+        _id: user._id,
+        ...user.account,
+      },
+    });
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour du profil :", error);
+    res.status(500).json({ message: "Erreur interne du serveur." });
+  }
+};
+
+const uploadAvatarHandler = async (
+  req: Request<{ userId: string }, {}, {}>,
+  res: Response
+): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    if (!userId || !req.files?.avatar) {
+      res
+        .status(400)
+        .json({ message: "ID utilisateur ou fichier d'avatar manquant." });
+      return;
+    }
+
+    const user = await updateUserData(
+      userId,
+      {},
+      req.files.avatar as fileUpload.UploadedFile
+    );
+
+    if (!user) {
+      res.status(404).json({ message: "Utilisateur non trouvé." });
+      return;
+    }
+
+    res.status(200).json({
+      message: "Avatar mis à jour avec succès.",
+      avatarUrl: user.account.avatar,
+    });
+  } catch (error) {
+    console.error("Erreur lors du téléchargement de l'avatar :", error);
+    res.status(500).json({ message: "Erreur interne du serveur." });
+  }
+};
+
+router.post("/user/upload-avatar", fileUpload(), uploadAvatarHandler);
+router.put("/user/profile/:userId", isAuthenticated, updateProfileHandler);
+
+router.post("/user/signup", signupHandler);
 router.post("/user/login", loginHandler);
 
 export default router;
