@@ -1,41 +1,56 @@
-import mongoose, { Schema, Document } from "mongoose";
+import { Document, model, Schema } from "mongoose";
 
-// Define the TypeScript interface for the User properties
+// Définir l'interface IUser
 export interface UserProps {
   email: string;
+  password: string;
   account: {
     username: string;
-    avatar?: string;
-
-    address: string; // Ensure address is defined here
-    phoneNumber: string; // Define phoneNumber here
-    country?: string; // Optional property
+    avatar?: string; // Optionnel, pas besoin de valeur par défaut ici si tu la gères côté front-end
+    address?: string;
+    phoneNumber?: string; // Utilisation de 'string' pour le numéro de téléphone
+    country?: string;
   };
-  newsletter?: boolean;
+  newsletter: boolean; // Optionnel, la valeur par défaut est false
   token: string;
   hash: string;
   salt: string;
-  _id: string;
 }
 
-// Define the Mongoose schema for the User
-const UserSchema = new Schema<UserProps>({
-  email: { type: String, required: true },
-  account: {
-    username: { type: String, required: true },
-    avatar: { type: String },
+// Définir le schéma de l'utilisateur en utilisant Mongoose
+const UserSchema = new Schema<UserProps & Document>(
+  {
+    email: {
+      type: String,
+      required: true,
+      unique: true, // Assure l'unicité de l'email
+      match: [
+        /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
+        "Veuillez fournir un email valide.",
+      ],
+    },
+    password: {
+      type: String,
+      required: true,
+      minlength: [8, "Le mot de passe doit contenir au moins 8 caractères."],
+    },
 
-    address: { type: String, required: true }, // Include address here
-    phoneNumber: { type: String, required: true }, // Include phoneNumber here
-    country: { type: String, required: true },
+    account: {
+      username: { type: String, required: true },
+      avatar: { type: String, default: null }, // Avatar optionnel avec valeur par défaut
+      adress: { type: String, default: null }, // Ajout de la validation pour l'adresse
+      phoneNumber: { type: String, default: null }, // 'phoneNumber' en tant que String
+      country: { type: String, default: null },
+    },
+    newsletter: { type: Boolean, default: false }, // Valeur par défaut pour 'newsletter'
+    token: { type: String, required: true },
+    hash: { type: String, required: true },
+    salt: { type: String, required: true },
   },
-  newsletter: { type: Boolean, default: false },
-  token: { type: String, required: true },
-  hash: { type: String, required: true },
-  salt: { type: String, required: true },
-});
+  { timestamps: true }
+);
 
-// Export the Mongoose model with the User interface
-const User = mongoose.model<UserProps & Document>("User", UserSchema);
+// Créer le modèle utilisateur
+const User = model<UserProps & Document>("User", UserSchema);
 
 export default User;
