@@ -10,16 +10,22 @@ export const signup = async (
   res: Response
 ): Promise<void> => {
   const { username, email, password, confirmPassword } = req.body;
-  //   if (!username || !email || !password || !confirmPassword) {
-  //     res.status(400).json({ message: "Tous les champs sont requis." });
-  //     return;
-  //   }
-  if (password !== confirmPassword) {
-    res
-      .status(400)
-      .json({ message: "Les mots de passe ne correspondent pas." });
+  console.log(username);
+
+  if (!username || !email || !password || !confirmPassword) {
+    res.status(400).json({ message: "Tous les champs sont requis." });
     return;
   }
+  console.log(email);
+
+  if (password !== confirmPassword) {
+    res.status(400).json({ message: "Les mots de passe ne correspondent BN." });
+    return;
+  }
+  console.log("OK!!!");
+  console.log("Received password:", password);
+  console.log("Received confirmPassword:", confirmPassword);
+
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {

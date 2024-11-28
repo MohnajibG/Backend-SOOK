@@ -11,7 +11,7 @@ export interface UserProps {
     phoneNumber?: string; // Utilisation de 'string' pour le numéro de téléphone
     country?: string;
   };
-  newsletter: boolean; // Optionnel, la valeur par défaut est false
+  newsletter: boolean;
   token: string;
   hash: string;
   salt: string;
