@@ -1,13 +1,16 @@
-import express, { Request, Response, Router } from "express";
+import express from "express";
 import { signup, login } from "../controllers/authController";
-import { updateProfile, uploadAvatar } from "../controllers/profileController";
-
+import {
+  updateprofileUpdate,
+  uploadAvatar,
+} from "../controllers/profileController";
+import isAuthenticated from "../middlewares/isAuthenticated";
 const router = express.Router();
 
 // Déclare tes routes
 router.post("/signup", signup);
 router.post("/login", login);
-router.put("/profile/:userId", updateProfile);
-router.post("/profile/:userId/avatar", uploadAvatar);
+router.put("/profileUpdate/:userId", updateprofileUpdate);
+router.post("/profileUpdate/:userId/avatar", isAuthenticated, uploadAvatar);
 
 export default router;
