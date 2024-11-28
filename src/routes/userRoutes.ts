@@ -1,19 +1,13 @@
-import express from "express";
-import multer from "multer"; // Pour gérer les fichiers
+import express, { Request, Response, Router } from "express";
+import { signup, login } from "../controllers/authController";
+import { updateProfile, uploadAvatar } from "../controllers/profileController";
 
-import {
-  signup,
-  updateProfile,
-  uploadAvatar,
-  login,
-} from "../controllers/userControllers";
 const router = express.Router();
-const upload = multer({ dest: "uploads/" });
 
-router.post("/user/signup", signup); // Route d'inscription
-router.post("/user/login", login); // Route de connexion
-
-router.put("/user/profile/:userId"); // Route pour mettre à jour le profil
-router.put("user/avatar/:userId", upload.single("avatar")); // Route pour uploader l'avatar
+// Déclare tes routes
+router.post("/signup", signup);
+router.post("/login", login);
+router.put("/profile/:userId", updateProfile);
+router.post("/profile/:userId/avatar", uploadAvatar);
 
 export default router;

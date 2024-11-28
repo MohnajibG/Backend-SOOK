@@ -43,9 +43,9 @@ const UserSchema = new Schema<UserProps & Document>(
       country: { type: String, default: null },
     },
     newsletter: { type: Boolean, default: false }, // Valeur par défaut pour 'newsletter'
-    token: { type: String, required: true },
-    hash: { type: String, required: true },
-    salt: { type: String, required: true },
+    token: { type: String },
+    hash: { type: String },
+    salt: { type: String },
   },
   { timestamps: true }
 );
