@@ -2,29 +2,48 @@ import { Request, Response } from "express";
 import uid2 from "uid2";
 import SHA256 from "crypto-js/sha256";
 import User from "../models/User";
+import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 import { SignupRequestBody } from "../types/types";
 
-// Fonction pour s'inscrire
 export const signup = async (
   req: Request<{}, {}, SignupRequestBody>,
   res: Response
 ): Promise<void> => {
-  const { username, email, password, confirmPassword } = req.body;
-  console.log(username);
+  const mailerSend = new MailerSend({
+    apiKey: process.env.MAILERSEND_API_KEY || "",
+  });
+  const sentFrom = new Sender(`you@${process.env.DOMAIN}`, "SOOK");
 
+  const { username, email, password, confirmPassword } = req.body;
+
+  // Validation des champs
   if (!username || !email || !password || !confirmPassword) {
     res.status(400).json({ message: "Tous les champs sont requis." });
     return;
   }
-  console.log(email);
 
   if (password !== confirmPassword) {
-    res.status(400).json({ message: "Les mots de passe ne correspondent BN." });
+    res
+      .status(400)
+      .json({ message: "Les mots de passe ne correspondent pas." });
     return;
   }
-  console.log("OK!!!");
-  console.log("Received password:", password);
-  console.log("Received confirmPassword:", confirmPassword);
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    res.status(400).json({ message: "Email invalide." });
+    return;
+  }
+
+  // Optionnel: Validation de la force du mot de passe
+  if (password.length < 8) {
+    res
+      .status(400)
+      .json({
+        message: "Le mot de passe doit comporter au moins 8 caractères.",
+      });
+    return;
+  }
 
   try {
     const existingUser = await User.findOne({ email });
@@ -32,28 +51,53 @@ export const signup = async (
       res.status(409).json({ message: "Email déjà utilisé." });
       return;
     }
+
+    // Génération des credentials
     const salt = uid2(64);
     const hash = SHA256(password + salt).toString();
     const token = uid2(64);
 
+    // Création de l'utilisateur
     const newUser = new User({
       email,
       account: { username },
-      password: hash,
+      password: hash, // Utilisez `password` pour le mot de passe crypté
       salt,
       token,
     });
     await newUser.save();
+
+    // Préparation et envoi de l'e-mail de bienvenue
+    const message = `Bonjour ${username}, bienvenue dans SOOK!`;
+    const recipients = [new Recipient(email, username)];
+    const emailParams = new EmailParams()
+      .setFrom(sentFrom)
+      .setTo(recipients)
+      .setSubject("Bienvenue dans SOOK!")
+      .setHtml(`<strong>${message}</strong>`)
+      .setText(message);
+
+    try {
+      const emailResult = await mailerSend.email.send(emailParams);
+
+      console.log("Email envoyé avec succès :", emailResult);
+    } catch (emailError) {
+      console.error("Erreur d'envoi d'e-mail:", emailError);
+      res.status(500).json({
+        message: "Erreur interne du serveur lors de l'envoi de l'e-mail.",
+      });
+      return;
+    }
+
     res.status(201).json({
+      message: "Inscription réussie. Un e-mail de bienvenue a été envoyé.",
       userId: newUser._id,
       token: newUser.token,
       account: { username: newUser.account.username },
     });
-    return;
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Erreur interne du serveur." });
-    return;
   }
 };
 
