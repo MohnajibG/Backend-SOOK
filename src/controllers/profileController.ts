@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import cloudinary from "cloudinary";
 import User from "../models/User";
 import { UpdateprofileUpdateParams, SignupRequestBody } from "../types/types";
@@ -10,9 +10,10 @@ cloudinary.v2.config({
 });
 
 // Fonction pour mettre à jour le profil
-export const updateprofileUpdate = async (
+export const updateProfile = async (
   req: Request<UpdateprofileUpdateParams, {}, SignupRequestBody>,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const { userId } = req.params;
   const { sexe, dateOfBorn, address, phoneNumber, country } = req.body;
@@ -59,7 +60,8 @@ export const updateprofileUpdate = async (
 // Fonction pour uploader un avatar
 export const uploadAvatar = async (
   req: Request<{ userId: string }>,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const { userId } = req.params;
 
