@@ -1,31 +1,40 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
-// Définition des propriétés de l'offre
-export interface OfferProps extends Document {
-  product_name: string;
-  product_description: string;
-  product_price: number;
-  product_details: Array<{ key: string; value: string | number }>; // Typage précis des détails
-  product_image?: Record<string, unknown>;
-  product_date?: Date;
-  owner: mongoose.Types.ObjectId;
+interface Offer extends Document {
+  userId: mongoose.Types.ObjectId;
+  title: string;
+  description: string;
+  price: number;
+  condition: string;
+  city: string;
+  brand: string;
+  size: string;
+  color: string;
+  pictures: string[]; // Tableau d'URLs des images
+  createdAt: Date;
 }
 
-// Schéma de l'offre
-const OfferSchema = new Schema<OfferProps>({
-  product_name: { type: String, required: true },
-  product_description: { type: String, required: true },
-  product_price: { type: Number, required: true },
-  product_details: {
-    type: [{ key: String, value: Schema.Types.Mixed }], // Définit un tableau d'objets avec des clés et valeurs typées
-    default: [],
+const OfferSchema: Schema = new Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    price: { type: Number, required: true },
+    condition: { type: String, required: true },
+    city: { type: String, required: true },
+    brand: { type: String, required: true },
+    size: { type: String, required: true },
+    color: { type: String, required: true },
+    pictures: { type: [String], required: true }, // Tableau d'URLs des images
+    createdAt: { type: Date, default: Date.now },
   },
-  product_image: { type: Schema.Types.Mixed, default: {} },
-  product_date: { type: Date, default: Date.now },
-  owner: { type: Schema.Types.ObjectId, ref: "User", required: true },
-});
+  { timestamps: true }
+);
 
-// Création du modèle
-const Offer = mongoose.model<OfferProps>("Offer", OfferSchema);
+const OfferModel = mongoose.model<Offer>("Offer", OfferSchema);
 
-export default Offer; // Export du modèle
+export default OfferModel;

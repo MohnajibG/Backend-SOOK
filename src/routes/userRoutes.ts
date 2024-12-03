@@ -11,9 +11,9 @@ const router = express.Router();
 // Déclare tes routes
 router.post("/signup", signup);
 router.post("/login", login);
-router.get("/user/:userId/profilePage", isAuthenticated, getUserProfile);
+router.get("/profile/:Id", isAuthenticated, getUserProfile);
+router.put("/profile/:id/", updateProfile);
 
-router.put("/profilePage/:id/", updateProfile);
 // router.post("/profileUpdate/avatar/:id", isAuthenticated, uploadAvatar);
 // router.post("/profileUpdate/avatar/:id", isAuthenticated, uploadAvatar);
 
