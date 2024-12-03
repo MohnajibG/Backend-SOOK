@@ -31,11 +31,7 @@ const UserSchema = new Schema<UserProps & Document>(
         "Veuillez fournir un email valide.",
       ],
     },
-    password: {
-      type: String,
-      required: [true, "Le mot de passe est requis."],
-      minlength: [8, "Le mot de passe doit contenir au moins 8 caractères."],
-    },
+
     account: {
       username: {
         type: String,

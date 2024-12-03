@@ -35,13 +35,10 @@ export const signup = async (
     return;
   }
 
-  // Optionnel: Validation de la force du mot de passe
   if (password.length < 8) {
-    res
-      .status(400)
-      .json({
-        message: "Le mot de passe doit comporter au moins 8 caractères.",
-      });
+    res.status(400).json({
+      message: "Le mot de passe doit comporter au moins 8 caractères.",
+    });
     return;
   }
 
@@ -54,14 +51,14 @@ export const signup = async (
 
     // Génération des credentials
     const salt = uid2(64);
-    const hash = SHA256(password + salt).toString();
+    const hash = SHA256(password + salt).toString(); // Calcul du hash
     const token = uid2(64);
 
     // Création de l'utilisateur
     const newUser = new User({
       email,
       account: { username },
-      password: hash, // Utilisez `password` pour le mot de passe crypté
+      hash, // Utilisez uniquement `hash` ici
       salt,
       token,
     });
@@ -79,7 +76,6 @@ export const signup = async (
 
     try {
       const emailResult = await mailerSend.email.send(emailParams);
-
       console.log("Email envoyé avec succès :", emailResult);
     } catch (emailError) {
       console.error("Erreur d'envoi d'e-mail:", emailError);
@@ -107,34 +103,40 @@ export const login = async (
   res: Response
 ): Promise<void> => {
   const { email, password } = req.body;
+
   if (!email || !password) {
     res.status(400).json({ message: "Email et mot de passe sont requis." });
     return;
   }
+
   try {
     const user = await User.findOne({ email });
     if (!user) {
       res.status(401).json({ message: "Utilisateur non trouvé." });
       return;
     }
+
+    // Vérification du mot de passe
     const hashedPassword = SHA256(password + user.salt).toString();
-    if (hashedPassword !== user.password) {
+    if (hashedPassword !== user.hash) {
+      // Utilisation de `hash` pour comparaison
       res.status(401).json({ message: "Mot de passe incorrect." });
       return;
     }
+
+    // Génération d'un nouveau token
     const token = uid2(32);
     user.token = token;
     await user.save();
+
     res.status(200).json({
       message: "Connexion réussie.",
       token,
       userId: user._id,
       account: { username: user.account.username, avatar: user.account.avatar },
     });
-    return;
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Erreur interne du serveur." });
-    return;
   }
 };
