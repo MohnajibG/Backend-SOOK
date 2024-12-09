@@ -4,17 +4,24 @@ import { UpdateprofileUpdateParams, SignupRequestBody } from "../types/types";
 
 // Fonction pour mettre à jour le profil
 export const updateProfile = async (
-  req: Request<UpdateprofileUpdateParams, {}, SignupRequestBody>,
+  req: Request<
+    { userId: string },
+    {},
+    {
+      sexe: string;
+      dateOfBorn: string;
+      address: string;
+      phoneNumber: string;
+      country: string;
+    }
+  >,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   const { userId } = req.params;
   const { sexe, dateOfBorn, address, phoneNumber, country } = req.body;
 
-  console.log(userId);
-
-  // Vérifie que tous les champs requis sont présents
-  if (!address || !phoneNumber || !country) {
+  if (!address || !phoneNumber || !country || !sexe || !dateOfBorn) {
     res.status(400).json({
       message:
         "Tous les champs (adresse, téléphone, pays, sexe, date de naissance) sont requis.",
@@ -23,37 +30,39 @@ export const updateProfile = async (
   }
 
   try {
-    // Recherche l'utilisateur par ID
-    const user = await User.findById(userId);
-    if (!user) {
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          "account.sexe": sexe,
+          "account.dateOfBorn": dateOfBorn,
+          "account.address": address,
+          "account.phoneNumber": phoneNumber,
+          "account.country": country,
+        },
+      },
+      { new: true, runValidators: true } // `new` pour retourner le document mis à jour, `runValidators` pour appliquer les validations
+    );
+
+    if (!updatedUser) {
       res.status(404).json({ message: "Utilisateur non trouvé." });
       return;
     }
 
-    // Mise à jour des champs du profil utilisateur
-    user.account.sexe = sexe;
-    user.account.dateOfBorn = dateOfBorn;
-    user.account.address = address;
-    user.account.phoneNumber = phoneNumber;
-    user.account.country = country;
-    await user.save();
-
     res.status(200).json({
       message: "Profil mis à jour avec succès.",
       account: {
-        sexe: user.account.sexe,
-        dateOfBorn: user.account.dateOfBorn,
-        address: user.account.address,
-        phoneNumber: user.account.phoneNumber,
-        country: user.account.country,
+        sexe: updatedUser.account.sexe,
+        dateOfBorn: updatedUser.account.dateOfBorn,
+        address: updatedUser.account.address,
+        phoneNumber: updatedUser.account.phoneNumber,
+        country: updatedUser.account.country,
       },
     });
   } catch (error) {
     console.error("Erreur lors de la mise à jour du profil :", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
-
-  console.log(userId);
 };
 
 // Fonction pour récupérer les informations du profil d'un utilisateur par ID
