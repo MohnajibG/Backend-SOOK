@@ -11,6 +11,4 @@ const router = express.Router();
 router.get("/user/profile/:userId", isAuthenticated, getUserProfile);
 router.put("/user/profile/:userId", isAuthenticated, updateProfile);
 
-// router.post("/profileUpdate/avatar/:id", isAuthenticated, uploadAvatar);
-
 export default router;
