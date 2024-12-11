@@ -19,13 +19,13 @@ export const updateProfile = async (
   const { userId } = req.params;
   const { sexe, dateOfBorn, address, phoneNumber, country } = req.body;
 
-  if (!address || !phoneNumber || !country || !sexe || !dateOfBorn) {
-    res.status(400).json({
-      message:
-        "Tous les champs (adresse, téléphone, pays, sexe, date de naissance) sont requis.",
-    });
-    return;
-  }
+  // if (!address || !phoneNumber || !country || !sexe || !dateOfBorn) {
+  //   res.status(400).json({
+  //     message:
+  //       "Tous les champs (adresse, téléphone, pays, sexe, date de naissance) sont requis.",
+  //   });
+  //   return;
+  // }
 
   try {
     const updatedUser = await User.findByIdAndUpdate(
