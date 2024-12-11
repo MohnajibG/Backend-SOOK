@@ -8,8 +8,8 @@ import isAuthenticated from "../middlewares/isAuthenticated";
 const router = express.Router();
 
 // Déclare tes routes
-router.get("/user/profile/:userId", isAuthenticated, getUserProfile);
-router.put("/user/profile/:userId", isAuthenticated, updateProfile);
+router.get("/user/profile/:userId", getUserProfile);
+router.put("/user/profile/:userId", updateProfile);
 
 // router.post("/profileUpdate/avatar/:id", isAuthenticated, uploadAvatar);
 
