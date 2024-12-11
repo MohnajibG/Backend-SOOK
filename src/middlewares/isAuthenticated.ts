@@ -18,11 +18,13 @@ const isAuthenticated = async (
     const user = await User.findOne({ token: token });
     if (!user) {
       res.status(401).json({ message: "Unauthorzied" });
+      return;
     }
     req.user = user;
     return next();
   } catch (error) {
     res.status(500).json({ error: error.message });
+    return;
   }
 };
 
