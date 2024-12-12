@@ -8,7 +8,7 @@ import isAuthenticated from "../middlewares/isAuthenticated";
 const router = express.Router();
 
 // Déclare tes routes
-router.get("/user/profile/:userId", isAuthenticated, getUserProfile);
-router.put("/user/profile/:userId", isAuthenticated, updateProfile);
+router.get("/profile/:userId", isAuthenticated, getUserProfile);
+router.put("/profile/:userId", isAuthenticated, updateProfile);
 
 export default router;

@@ -1,10 +1,6 @@
 import express from "express";
 import { signup, login } from "../controllers/authController";
-import {
-  getUserProfile,
-  updateProfile,
-  // uploadAvatar,
-} from "../controllers/profileController";
+
 const router = express.Router();
 
 // Déclare tes routes
