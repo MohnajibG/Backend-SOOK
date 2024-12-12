@@ -1,6 +1,6 @@
 import express from "express";
 import fileUpload from "express-fileupload";
-import isAuthenticated from "../middlewares/isAuthenticated";
+// import isAuthenticated from "../middlewares/isAuthenticated";
 
 const router = express.Router();
 
