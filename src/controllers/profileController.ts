@@ -11,13 +11,15 @@ export const updateProfile = async (
       address: string;
       phoneNumber: string;
       country: string;
+      postalCode: string;
     }
   >,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   const { userId } = req.params;
-  const { sexe, dateOfBorn, address, phoneNumber, country } = req.body;
+  const { sexe, dateOfBorn, address, postalCode, phoneNumber, country } =
+    req.body;
 
   if (!address || !phoneNumber || !country || !sexe || !dateOfBorn) {
     res.status(400).json({
@@ -35,6 +37,7 @@ export const updateProfile = async (
           "account.sexe": sexe,
           "account.dateOfBorn": dateOfBorn,
           "account.address": address,
+          "account.postalCode": postalCode,
           "account.phoneNumber": phoneNumber,
           "account.country": country,
         },
@@ -56,6 +59,7 @@ export const updateProfile = async (
         sexe: updatedUser.account.sexe,
         dateOfBorn: updatedUser.account.dateOfBorn,
         address: updatedUser.account.address,
+        postalCode: updatedUser.account.postalCode,
         phoneNumber: updatedUser.account.phoneNumber,
         country: updatedUser.account.country,
       },

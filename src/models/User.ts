@@ -5,13 +5,14 @@ export interface UserProps {
   email: string;
   password: string;
   account: {
-    username: string;
     avatar?: string; // Optionnel, géré côté front-end si nécessaire
-    address?: string; // Correction de 'adress' en 'address'
-    phoneNumber?: string;
-    country?: string;
+    username: string;
     sexe?: "Homme" | "Femme" | "Autre"; // Utilisation d'un enum-like pour les valeurs attendues
     dateOfBorn?: string; // Optionnel, mais validé au besoin
+    phoneNumber?: string;
+    address?: string; // Correction de 'adress' en 'address'
+    postalCode?: string;
+    country?: string;
   };
   newsletter: boolean;
   token?: string;
@@ -40,6 +41,7 @@ const UserSchema = new Schema<UserProps & Document>(
       avatar: { type: String, default: null }, // Valeur par défaut si non spécifiée.
       address: { type: String, default: null },
       phoneNumber: { type: String, default: null },
+      postalCode: { type: String, default: null },
       country: { type: String, default: null },
       sexe: {
         type: String,
