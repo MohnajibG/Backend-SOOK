@@ -1,16 +1,8 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, Request, NextFunction } from "express";
 import cloudinary from "cloudinary";
 import Offer from "../models/Offer";
-import { UploadedFile } from "express-fileupload"; // Type pour le fichier uploadé
+import { log } from "console";
 
-// // Configuration de Cloudinary
-// cloudinary.v2.config({
-//   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-//   api_key: process.env.CLOUDINARY_API_KEY,
-//   api_secret: process.env.CLOUDINARY_API_SECRET,
-// });
-
-// Fonction pour publier l'offre avec plusieurs images
 export const publishOffer = async (
   req: Request,
   res: Response,
@@ -19,7 +11,7 @@ export const publishOffer = async (
   const {
     userId,
     title,
-    description,
+    discription,
     price,
     condition,
     city,
@@ -27,88 +19,39 @@ export const publishOffer = async (
     size,
     color,
   } = req.body;
-
   if (
     !userId ||
     !title ||
-    !description ||
+    !discription ||
     !price ||
     !condition ||
     !city ||
     !brand ||
-    !size ||
-    !color
+    !size
   ) {
     res.status(400).json({ message: "Tous les champs sont requis." });
     return;
   }
-
   try {
-    // Tableau pour stocker les URLs des images
     const pictureUrls: string[] = [];
 
-    // Vérifier si des fichiers ont été uploadés
     if (req.files && req.files.pictures) {
-      const files = req.files.pictures as UploadedFile | UploadedFile[]; // Plusieurs fichiers possibles
-
+      const files = req.files.pictures;
       if (Array.isArray(files)) {
-        // Si plusieurs fichiers ont été envoyés
-        for (const file of files) {
-          const result = await cloudinary.v2.uploader.upload(file.tempFilePath);
-          pictureUrls.push(result.secure_url); // Ajouter l'URL de chaque image
-        }
+        const uploadPromises = files.map((file) => {
+          cloudinary.v2.uploader.upload(file.tempFilePath);
+        });
+        const results = await Promise.all(uploadPromises);
+        pictureUrls.push(...results.map((result) => result.secure_url));
+
+        console.log("toutes les images ont ete upload", pictureUrls);
       } else {
-        // Si un seul fichier a été envoyé
-        const result = await cloudinary.v2.uploader.upload(
-          (files as UploadedFile).tempFilePath
-        );
-        pictureUrls.push(result.secure_url); // Ajouter l'URL de l'image
+        const result = await cloudinary.v2.uploader.upload(files.tempFilePath);
+        pictureUrls.push(result.secure_url);
       }
     }
-
-    // Création de l'offre dans la base de données
-    const newOffer = new Offer({
-      userId,
-      title,
-      description,
-      price,
-      condition,
-      city,
-      brand,
-      size,
-      color,
-      pictures: pictureUrls, // Ajouter les URLs des images
-    });
-
+  } catch (error) {
+    res.status(500).json({ message: "Error lors de l'upload des images" });
     await newOffer.save();
-
-    res.status(200).json({
-      message: "Offre publiée avec succès.",
-      offer: newOffer,
-    });
-  } catch (error) {
-    console.error("Erreur lors de la publication de l'offre:", error);
-    res.status(500).json({ message: "Erreur interne du serveur." });
-  }
-};
-export const getOffers = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    // Récupérer toutes les offres depuis la base de données
-    const offers = await Offer.find();
-
-    if (!offers || offers.length === 0) {
-      res.status(404).json({ message: "Aucune offre trouvée." });
-      return;
-    }
-
-    // Retourner les offres sous forme de réponse JSON
-    res.status(200).json({ offers });
-  } catch (error) {
-    console.error("Erreur lors de la récupération des offres:", error);
-    res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };

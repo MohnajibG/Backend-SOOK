@@ -1,93 +1,144 @@
-import { NextFunction, Request, Response } from "express";
-import User from "../models/User";
+import { Request, Response, NextFunction } from "express";
+import cloudinary from "cloudinary";
+import Offer from "../models/Offer";
 
-export const updateProfile = async (
-  req: Request<
-    { userId: string },
-    {},
-    {
-      sexe: string;
-      dateOfBorn: string;
-      address: string;
-      phoneNumber: string;
-      country: string;
-      postalCode: string;
-    }
-  >,
+// Configuration de Cloudinary
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Fonction pour publier l'offre avec plusieurs images
+export const publishOffer = async (
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { userId } = req.params;
-  const { sexe, dateOfBorn, address, postalCode, phoneNumber, country } =
-    req.body;
+  const {
+    userId,
+    title,
+    description,
+    price,
+    condition,
+    city,
+    brand,
+    size,
+    color,
+  } = req.body;
 
-  if (!address || !phoneNumber || !country || !sexe || !dateOfBorn) {
-    res.status(400).json({
-      message:
-        "Tous les champs (adresse, téléphone, pays, sexe, date de naissance) sont requis.",
-    });
+  if (
+    !userId ||
+    !title ||
+    !description ||
+    !price ||
+    !condition ||
+    !city ||
+    !brand ||
+    !size ||
+    !color
+  ) {
+    res.status(400).json({ message: "Tous les champs sont requis." });
     return;
   }
 
   try {
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      {
-        $set: {
-          "account.sexe": sexe,
-          "account.dateOfBorn": dateOfBorn,
-          "account.address": address,
-          "account.postalCode": postalCode,
-          "account.phoneNumber": phoneNumber,
-          "account.country": country,
-        },
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    // Tableau pour stocker les URLs des images
+    const pictureUrls: string[] = [];
 
-    if (!updatedUser) {
-      res.status(404).json({ message: "Utilisateur non trouvé." });
-      return;
+    // Vérifier si des fichiers ont été uploadés
+    if (req.files && req.files.pictures) {
+      const files = req.files.pictures;
+
+      if (Array.isArray(files)) {
+        for (const file of files) {
+          const result = await cloudinary.v2.uploader.upload(file.tempFilePath);
+          pictureUrls.push(result.secure_url); // Ajouter l'URL de chaque image
+        }
+      } else {
+        // Si un seul fichier a été envoyé
+        const result = await cloudinary.v2.uploader.upload(files.tempFilePath);
+        pictureUrls.push(result.secure_url); // Ajouter l'URL de l'image
+      }
     }
 
+    // Création de l'offre dans la base de données
+    const newOffer = new Offer({
+      userId,
+      title,
+      description,
+      price,
+      condition,
+      city,
+      brand,
+      size,
+      color,
+      pictures: pictureUrls, // Ajouter les URLs des images
+    });
+
+    await newOffer.save();
+
     res.status(200).json({
-      message: "Profil mis à jour avec succès.",
-      account: {
-        sexe: updatedUser.account.sexe,
-        dateOfBorn: updatedUser.account.dateOfBorn,
-        address: updatedUser.account.address,
-        postalCode: updatedUser.account.postalCode,
-        phoneNumber: updatedUser.account.phoneNumber,
-        country: updatedUser.account.country,
-      },
+      message: "Offre publiée avec succès.",
+      offer: newOffer,
     });
   } catch (error) {
-    console.error("Erreur lors de la mise à jour du profil :", error);
+    console.error("Erreur lors de la publication de l'offre:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
 
-export const getUserProfile = async (
-  req: Request<{ userId: string }>,
+// Fonction pour récupérer toutes les offres
+export const getOffers = async (
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { userId } = req.params;
-
   try {
-    const user = await User.findById(userId);
+    // Récupérer toutes les offres depuis la base de données
+    const offers = await Offer.find();
 
-    if (!user) {
-      res.status(404).json({ message: "Utilisateur non trouvé" });
+    if (!offers || offers.length === 0) {
+      res.status(404).json({ message: "Aucune offre trouvée." });
       return;
     }
 
-    res.status(200).json(user);
+    // Retourner les offres sous forme de réponse JSON
+    res.status(200).json({ offers });
   } catch (error) {
-    console.error("Erreur lors de la récupération du profil :", error);
+    console.error("Erreur lors de la récupération des offres:", error);
+    res.status(500).json({ message: "Erreur interne du serveur." });
+  }
+};
+
+// Fonction pour rechercher des offres par titre
+export const searchOffers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const { keyword } = req.query;
+
+  if (!keyword || typeof keyword !== "string") {
+    res
+      .status(400)
+      .json({ message: "Un mot-clé est requis pour la recherche." });
+    return;
+  }
+
+  try {
+    // Création d'une expression régulière pour une recherche insensible à la casse
+    const regex = new RegExp(keyword, "i");
+    const offers = await Offer.find({ title: regex });
+
+    if (!offers || offers.length === 0) {
+      res.status(404).json({ message: "Aucune offre correspondante trouvée." });
+      return;
+    }
+
+    res.status(200).json({ offers });
+  } catch (error) {
+    console.error("Erreur lors de la recherche des offres :", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
