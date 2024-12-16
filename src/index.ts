@@ -1,8 +1,11 @@
 import express, { Response, Request } from "express";
 import mongoose from "mongoose";
 import cors from "cors";
+
 import userRoutes from "./routes/userRoutes";
 import profileRoutes from "./routes/profileRoutes";
+
+import offerRoutes from "./routes/odderRoutes";
 
 const app = express();
 app.use(cors());
@@ -11,6 +14,7 @@ app.use(express.json());
 // Assure-toi d'utiliser un préfixe, par exemple "/user"
 app.use("/user", userRoutes);
 app.use("/user", profileRoutes);
+app.use("/offer", offerRoutes);
 
 require("dotenv").config();
 
