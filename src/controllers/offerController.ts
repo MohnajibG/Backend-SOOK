@@ -16,20 +16,10 @@ export const publishOffer = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const {
-    userId,
-    title,
-    description,
-    price,
-    condition,
-    city,
-    brand,
-    size,
-    color,
-  } = req.body;
+  const { title, description, price, condition, city, brand, size, color } =
+    req.body;
 
   if (
-    !userId ||
     !title ||
     !description ||
     !price ||
