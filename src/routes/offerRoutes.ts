@@ -9,10 +9,9 @@ import isAuthenticated from "../middlewares/isAuthenticated";
 
 const router = express.Router();
 
-router.post("/offers/publish", isAuthenticated, publishOffer);
-
 router.get("/offers", getOffers);
-
 router.get("/offers/search", searchOffers);
+
+router.post("/offers/publish", isAuthenticated, publishOffer);
 
 export default router;

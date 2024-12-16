@@ -27,7 +27,7 @@ const connectMongoDB = async () => {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log("Connected to MongoDB ✅");
   } catch (error) {
-    console.error("Error connecting to MongoDB 🛑:", error);
+    console.log("Error connecting to MongoDB 🛑:", error);
   }
 };
 connectMongoDB();
@@ -38,7 +38,7 @@ app.get("/", (req: Request, res: Response) => {
 
 // Pour capturer les routes non trouvées
 app.all("*", (req: Request, res: Response) => {
-  res.status(404).json({ message: "404 on t'a dit" });
+  res.status(404).json({ message: "404, on t'a dit" });
 });
 
 // Lancement du serveur
