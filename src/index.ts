@@ -33,12 +33,12 @@ const connectMongoDB = async () => {
 connectMongoDB();
 
 app.get("/", (req: Request, res: Response) => {
-  res.status(200).json("Welcome to Vinted API");
+  res.status(200).json("Welcome to SOOOOK!!!");
 });
 
 // Pour capturer les routes non trouvées
 app.all("*", (req: Request, res: Response) => {
-  res.status(404).json({ message: "Route Not Found" });
+  res.status(404).json({ message: "Trouve le probleme, Courage🖕🏼" });
 });
 
 // Lancement du serveur
