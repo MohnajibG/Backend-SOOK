@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import cloudinary from "cloudinary";
 import Offer from "../models/Offer";
+import { SortOrder } from "mongoose"; // Import du type correct
 
 // Configuration de Cloudinary
 cloudinary.v2.config({
@@ -45,18 +46,15 @@ export const publishOffer = async (
   try {
     const pictureUrls: string[] = [];
 
-    // Vérifier si des fichiers ont été uploadés
     if (req.files && req.files.pictures) {
       const files = req.files.pictures;
 
       if (Array.isArray(files)) {
-        // Utilisation de Promise.all pour traiter les fichiers en parallèle
         const uploadResults = await Promise.all(
           files.map((file) => cloudinary.v2.uploader.upload(file.tempFilePath))
         );
         pictureUrls.push(...uploadResults.map((result) => result.secure_url));
       } else {
-        // Un seul fichier a été envoyé
         const result = await cloudinary.v2.uploader.upload(
           (files as any).tempFilePath
         );
@@ -64,7 +62,6 @@ export const publishOffer = async (
       }
     }
 
-    // Création de l'offre dans la base de données
     const newOffer = new Offer({
       userId,
       title,
@@ -97,7 +94,18 @@ export const getOffers = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const offers = await Offer.find();
+    // Récupération des paramètres de tri et pagination
+    const sortField = (req.query.sort as string) || "createdAt";
+    const sortOrder: SortOrder = req.query.order === "asc" ? 1 : -1;
+    const limit = Number(req.query.limit) || 10;
+    const page = Number(req.query.page) || 1;
+    const skip = (page - 1) * limit;
+
+    // Création de l'objet de tri
+    const sortOption: Record<string, SortOrder> = { [sortField]: sortOrder };
+
+    // Récupération des offres avec tri, pagination et limite
+    const offers = await Offer.find().sort(sortOption).limit(limit).skip(skip);
 
     if (!offers || offers.length === 0) {
       res.status(404).json({ message: "Aucune offre trouvée." });
@@ -111,6 +119,7 @@ export const getOffers = async (
   }
 };
 
+// Fonction pour rechercher des offres
 export const searchOffers = async (
   req: Request,
   res: Response,

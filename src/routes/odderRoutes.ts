@@ -3,7 +3,8 @@ import {
   getOffers,
   publishOffer,
   searchOffers,
-} from "../controllers/offerControler"; // import isAuthenticated from "../middlewares/isAuthenticated";
+} from "../controllers/offerControler";
+
 import isAuthenticated from "../middlewares/isAuthenticated";
 
 const router = express.Router();
