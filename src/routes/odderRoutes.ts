@@ -3,7 +3,7 @@ import {
   getOffers,
   publishOffer,
   searchOffers,
-} from "../controllers/offerControler";
+} from "../controllers/offerController";
 
 import isAuthenticated from "../middlewares/isAuthenticated";
 
