@@ -43,7 +43,6 @@ export const publishOffer = async (
   }
 
   try {
-    // Tableau pour stocker les URLs des images
     const pictureUrls: string[] = [];
 
     // Vérifier si des fichiers ont été uploadés
