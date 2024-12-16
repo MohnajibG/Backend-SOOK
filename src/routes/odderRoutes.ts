@@ -9,7 +9,7 @@ import isAuthenticated from "../middlewares/isAuthenticated";
 
 const router = express.Router();
 
-router.post("/offers/publish", isAuthenticated, publishOffer);
+router.post("/offers/publish", publishOffer);
 
 router.get("/offers", getOffers);
 
