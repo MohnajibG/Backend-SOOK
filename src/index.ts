@@ -5,7 +5,7 @@ import cors from "cors";
 import userRoutes from "./routes/userRoutes";
 import profileRoutes from "./routes/profileRoutes";
 
-import offerRoutes from "./routes/odderRoutes";
+import offerRoutes from "./routes/offerRoutes";
 
 const app = express();
 app.use(cors());
