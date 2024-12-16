@@ -78,7 +78,7 @@ export const signup = async (
       const emailResult = await mailerSend.email.send(emailParams);
       console.log("Email envoyé avec succès :", emailResult);
     } catch (emailError) {
-      console.error("Erreur d'envoi d'e-mail:", emailError);
+      console.log("Erreur d'envoi d'e-mail:", emailError);
       res.status(500).json({
         message: "Erreur interne du serveur lors de l'envoi de l'e-mail.",
       });
@@ -92,7 +92,7 @@ export const signup = async (
       account: { username: newUser.account.username },
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };

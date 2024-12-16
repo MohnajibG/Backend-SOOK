@@ -82,7 +82,7 @@ export const publishOffer = async (
       offer: newOffer,
     });
   } catch (error) {
-    console.error("Erreur lors de la publication de l'offre:", error);
+    console.log("Erreur lors de la publication de l'offre:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
@@ -114,7 +114,7 @@ export const getOffers = async (
 
     res.status(200).json({ offers });
   } catch (error) {
-    console.error("Erreur lors de la récupération des offres:", error);
+    console.log("Erreur lors de la récupération des offres:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
@@ -145,7 +145,7 @@ export const searchOffers = async (
 
     res.status(200).json({ offers });
   } catch (error) {
-    console.error("Erreur lors de la recherche des offres :", error);
+    console.log("Erreur lors de la recherche des offres :", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
