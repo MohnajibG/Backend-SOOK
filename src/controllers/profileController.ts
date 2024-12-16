@@ -51,14 +51,17 @@ export const publishOffer = async (
       const files = req.files.pictures;
 
       if (Array.isArray(files)) {
-        for (const file of files) {
-          const result = await cloudinary.v2.uploader.upload(file.tempFilePath);
-          pictureUrls.push(result.secure_url); // Ajouter l'URL de chaque image
-        }
+        // Utilisation de Promise.all pour traiter les fichiers en parallèle
+        const uploadResults = await Promise.all(
+          files.map((file) => cloudinary.v2.uploader.upload(file.tempFilePath))
+        );
+        pictureUrls.push(...uploadResults.map((result) => result.secure_url));
       } else {
-        // Si un seul fichier a été envoyé
-        const result = await cloudinary.v2.uploader.upload(files.tempFilePath);
-        pictureUrls.push(result.secure_url); // Ajouter l'URL de l'image
+        // Un seul fichier a été envoyé
+        const result = await cloudinary.v2.uploader.upload(
+          (files as any).tempFilePath
+        );
+        pictureUrls.push(result.secure_url);
       }
     }
 
@@ -73,7 +76,7 @@ export const publishOffer = async (
       brand,
       size,
       color,
-      pictures: pictureUrls, // Ajouter les URLs des images
+      pictures: pictureUrls,
     });
 
     await newOffer.save();
@@ -95,7 +98,6 @@ export const getOffers = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    // Récupérer toutes les offres depuis la base de données
     const offers = await Offer.find();
 
     if (!offers || offers.length === 0) {
@@ -103,7 +105,6 @@ export const getOffers = async (
       return;
     }
 
-    // Retourner les offres sous forme de réponse JSON
     res.status(200).json({ offers });
   } catch (error) {
     console.error("Erreur lors de la récupération des offres:", error);
@@ -111,7 +112,6 @@ export const getOffers = async (
   }
 };
 
-// Fonction pour rechercher des offres par titre
 export const searchOffers = async (
   req: Request,
   res: Response,
@@ -127,7 +127,6 @@ export const searchOffers = async (
   }
 
   try {
-    // Création d'une expression régulière pour une recherche insensible à la casse
     const regex = new RegExp(keyword, "i");
     const offers = await Offer.find({ title: regex });
 
