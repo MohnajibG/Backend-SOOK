@@ -103,11 +103,30 @@ export const getOffers = async (
     const page = Number(req.query.page) || 1;
     const skip = (page - 1) * limit;
 
+    // Validation des paramètres limit et page
+    if (isNaN(limit) || limit <= 0) {
+      res
+        .status(400)
+        .json({ message: "Le paramètre 'limit' doit être un nombre positif." });
+      return;
+    }
+
+    if (isNaN(page) || page <= 0) {
+      res
+        .status(400)
+        .json({ message: "Le paramètre 'page' doit être un nombre positif." });
+      return;
+    }
+
     // Création de l'objet de tri
     const sortOption: Record<string, SortOrder> = { [sortField]: sortOrder };
 
     // Récupération des offres avec tri, pagination et limite
-    const offers = await Offer.find().sort(sortOption).limit(limit).skip(skip);
+    const offers = await Offer.find()
+      .sort(sortOption)
+      .limit(limit)
+      .skip(skip)
+      .populate("userId", "username", "avatar");
 
     if (!offers || offers.length === 0) {
       res.status(404).json({ message: "Aucune offre trouvée." });

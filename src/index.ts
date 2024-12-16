@@ -15,7 +15,7 @@ app.use(express.json());
 app.use("/user", userRoutes);
 app.use("/user", profileRoutes);
 
-app.use("/offer", offerRoutes);
+app.use(offerRoutes);
 
 require("dotenv").config();
 

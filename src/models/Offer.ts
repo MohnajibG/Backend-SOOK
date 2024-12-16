@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 
+// Interface pour le modèle d'offre
 interface Offer extends Document {
   userId: mongoose.Types.ObjectId;
   title: string;
@@ -18,7 +19,7 @@ const OfferSchema: Schema = new Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "User", // Référence au modèle "User"
       required: true,
     },
     title: { type: String, required: true },
@@ -32,9 +33,10 @@ const OfferSchema: Schema = new Schema(
     pictures: { type: [String], required: true }, // Tableau d'URLs des images
     createdAt: { type: Date, default: Date.now },
   },
-  { timestamps: true }
+  { timestamps: true } // Pour avoir les champs createdAt et updatedAt automatiquement
 );
 
+// Création du modèle Mongoose basé sur le schéma
 const OfferModel = mongoose.model<Offer>("Offer", OfferSchema);
 
 export default OfferModel;
