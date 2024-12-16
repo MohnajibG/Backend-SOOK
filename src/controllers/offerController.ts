@@ -19,16 +19,7 @@ export const publishOffer = async (
   const { title, description, price, condition, city, brand, size, color } =
     req.body;
 
-  if (
-    !title ||
-    !description ||
-    !price ||
-    !condition ||
-    !city ||
-    !brand ||
-    !size ||
-    !color
-  ) {
+  if (!title || !price || !city || !brand || !size || !color) {
     res.status(400).json({ message: "Tous les champs sont requis." });
     return;
   }
@@ -53,7 +44,6 @@ export const publishOffer = async (
     }
 
     const newOffer = new Offer({
-      userId,
       title,
       description,
       price,
