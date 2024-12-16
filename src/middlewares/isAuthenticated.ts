@@ -12,7 +12,7 @@ const isAuthenticated = async (
 ): Promise<void> => {
   try {
     if (!req.headers.authorization) {
-      res.status(401).json({ message: "Unauthorized" });
+      res.status(401).json({ message: "Unauthorized 🤟🏻" });
       return;
     }
 
@@ -20,7 +20,7 @@ const isAuthenticated = async (
     const user = await User.findOne({ token: token });
 
     if (!user) {
-      res.status(401).json({ message: "Unauthorized" });
+      res.status(401).json({ message: "Unauthorized🙀" });
       return;
     }
 

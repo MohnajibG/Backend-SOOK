@@ -38,7 +38,7 @@ app.get("/", (req: Request, res: Response) => {
 
 // Pour capturer les routes non trouvées
 app.all("*", (req: Request, res: Response) => {
-  res.status(404).json({ message: "Trouve le probleme, Courage🖕🏼" });
+  res.status(404).json({ message: "404 on t'a dit" });
 });
 
 // Lancement du serveur
