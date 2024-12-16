@@ -18,6 +18,7 @@ export const publishOffer = async (
 ): Promise<void> => {
   const {
     userId,
+    username,
     title,
     description,
     price,
@@ -64,6 +65,7 @@ export const publishOffer = async (
 
     const newOffer = new Offer({
       userId,
+      username,
       title,
       description,
       price,

@@ -14,7 +14,8 @@ app.use(express.json());
 // Assure-toi d'utiliser un préfixe, par exemple "/user"
 app.use("/user", userRoutes);
 app.use("/user", profileRoutes);
-app.use(offerRoutes);
+
+app.use("/offer", offerRoutes);
 
 require("dotenv").config();
 
