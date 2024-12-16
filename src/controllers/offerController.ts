@@ -29,18 +29,27 @@ export const publishOffer = async (
     color,
   } = req.body;
 
-  if (
-    !userId ||
-    !title ||
-    !description ||
-    !price ||
-    !condition ||
-    !city ||
-    !brand ||
-    !size ||
-    !color
-  ) {
-    res.status(400).json({ message: "Tous les champs sont requis." });
+  // Validation pour le titre
+  if (!title) {
+    res.status(400).json({ message: "Le titre est requis." });
+    return;
+  }
+
+  // Validation pour la description
+  if (!description) {
+    res.status(400).json({ message: "La description est requise." });
+    return;
+  }
+
+  // Validation pour le prix
+  if (!price) {
+    res.status(400).json({ message: "Le prix est requis." });
+    return;
+  }
+
+  // Validation pour la ville
+  if (!city) {
+    res.status(400).json({ message: "La ville est requise." });
     return;
   }
 
