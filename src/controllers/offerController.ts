@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import cloudinary from "cloudinary";
 import Offer from "../models/Offer";
-import { SortOrder } from "mongoose"; // Import du type correct
+import { SortOrder } from "mongoose";
 
 // Configuration de Cloudinary
 cloudinary.v2.config({
@@ -29,27 +29,12 @@ export const publishOffer = async (
     color,
   } = req.body;
 
-  // Validation pour le titre
-  if (!title) {
-    res.status(400).json({ message: "Le titre est requis." });
-    return;
-  }
-
-  // Validation pour la description
-  if (!description) {
-    res.status(400).json({ message: "La description est requise." });
-    return;
-  }
-
-  // Validation pour le prix
-  if (!price) {
-    res.status(400).json({ message: "Le prix est requis." });
-    return;
-  }
-
-  // Validation pour la ville
-  if (!city) {
-    res.status(400).json({ message: "La ville est requise." });
+  // Validation des champs obligatoires
+  if (!title || !description || !price || !city || !brand || !color) {
+    res.status(400).json({
+      message:
+        "Veuillez remplir tous les champs obligatoires (titre, description, prix, ville, marque, couleur).",
+    });
     return;
   }
 
@@ -60,11 +45,13 @@ export const publishOffer = async (
       const files = req.files.pictures;
 
       if (Array.isArray(files)) {
+        // Téléchargement des images multiples sur Cloudinary
         const uploadResults = await Promise.all(
           files.map((file) => cloudinary.v2.uploader.upload(file.tempFilePath))
         );
         pictureUrls.push(...uploadResults.map((result) => result.secure_url));
       } else {
+        // Téléchargement d'une seule image sur Cloudinary
         const result = await cloudinary.v2.uploader.upload(
           (files as any).tempFilePath
         );
@@ -72,6 +59,7 @@ export const publishOffer = async (
       }
     }
 
+    // Création de la nouvelle offre
     const newOffer = new Offer({
       userId,
       username,
@@ -86,6 +74,7 @@ export const publishOffer = async (
       pictures: pictureUrls,
     });
 
+    // Enregistrement de l'offre dans la base de données
     await newOffer.save();
 
     res.status(200).json({
@@ -93,12 +82,12 @@ export const publishOffer = async (
       offer: newOffer,
     });
   } catch (error) {
-    console.log("Erreur lors de la publication de l'offre:", error);
+    console.error("Erreur lors de la publication de l'offre:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
 
-// Fonction pour récupérer toutes les offres
+// Fonction pour récupérer toutes les offres avec tri et pagination
 export const getOffers = async (
   req: Request,
   res: Response,
@@ -135,7 +124,7 @@ export const getOffers = async (
       .sort(sortOption)
       .limit(limit)
       .skip(skip)
-      .populate("userId", "username", "avatar");
+      .populate("userId", "username avatar");
 
     if (!offers || offers.length === 0) {
       res.status(404).json({ message: "Aucune offre trouvée." });
@@ -144,12 +133,12 @@ export const getOffers = async (
 
     res.status(200).json({ offers });
   } catch (error) {
-    console.log("Erreur lors de la récupération des offres:", error);
+    console.error("Erreur lors de la récupération des offres:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
 
-// Fonction pour rechercher des offres
+// Fonction pour rechercher des offres par mot-clé
 export const searchOffers = async (
   req: Request,
   res: Response,
@@ -157,6 +146,7 @@ export const searchOffers = async (
 ): Promise<void> => {
   const { keyword } = req.query;
 
+  // Validation du mot-clé
   if (!keyword || typeof keyword !== "string") {
     res
       .status(400)
@@ -175,7 +165,7 @@ export const searchOffers = async (
 
     res.status(200).json({ offers });
   } catch (error) {
-    console.log("Erreur lors de la recherche des offres :", error);
+    console.error("Erreur lors de la recherche des offres:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
