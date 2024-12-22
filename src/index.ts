@@ -6,6 +6,7 @@ import userRoutes from "./routes/userRoutes";
 import profileRoutes from "./routes/profileRoutes";
 
 import offerRoutes from "./routes/offerRoutes";
+import fileUpload from "express-fileupload";
 
 const app = express();
 app.use(cors());
@@ -32,6 +33,13 @@ const connectMongoDB = async () => {
   }
 };
 connectMongoDB();
+
+app.use(
+  fileUpload({
+    useTempFiles: true, // Permet d'utiliser tempFilePath
+    tempFileDir: "/tmp/",
+  })
+);
 
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json("Welcome to SOOOOK!!!");
