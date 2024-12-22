@@ -30,14 +30,14 @@ export const publishOffer = async (
       username,
     } = req.body;
 
-    // // Validation des champs obligatoires
-    // if (!title || !description || !price || !city || !brand || !color) {
-    //   res.status(400).json({
-    //     message:
-    //       "Veuillez remplir tous les champs obligatoires (titre, description, prix, ville, marque, couleur).",
-    //   });
-    //   return;
-    // }
+    // Validation des champs obligatoires
+    if (!title || !description || !price || !city || !brand || !color) {
+      res.status(400).json({
+        message:
+          "Veuillez remplir tous les champs obligatoires (titre, description, prix, ville, marque, couleur).",
+      });
+      return;
+    }
 
     // Vérification des fichiers
     if (!req.files || !req.files.pictures) {
