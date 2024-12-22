@@ -3,87 +3,85 @@ import cloudinary from "cloudinary";
 import Offer from "../models/Offer";
 import { SortOrder } from "mongoose";
 
-// Configuration de Cloudinary
+// Configuration Cloudinary
 cloudinary.v2.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+  api_key: process.env.CLOUDINARY_API_KEY!,
+  api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
 
-// Fonction pour publier l'offre avec plusieurs images
+// Fonction pour publier une offre
 export const publishOffer = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const {
-    userId,
-    username,
-    title,
-    description,
-    price,
-    condition,
-    city,
-    brand,
-    size,
-    color,
-  } = req.body;
-
-  // Validation des champs obligatoires
-  if (!title || !description || !price || !city || !brand || !color) {
-    res.status(400).json({
-      message:
-        "Veuillez remplir tous les champs obligatoires (titre, description, prix, ville, marque, couleur).",
-    });
-    return;
-  }
-
   try {
-    const pictureUrls: string[] = [];
+    const {
+      title,
+      description,
+      price,
+      city,
+      brand,
+      size,
+      color,
+      condition,
+      userId,
+      username,
+    } = req.body;
 
-    if (req.files && req.files.pictures) {
-      const files = req.files.pictures;
-
-      if (Array.isArray(files)) {
-        // Téléchargement des images multiples sur Cloudinary
-        const uploadResults = await Promise.all(
-          files.map((file) => cloudinary.v2.uploader.upload(file.tempFilePath))
-        );
-        pictureUrls.push(...uploadResults.map((result) => result.secure_url));
-      } else {
-        // Téléchargement d'une seule image sur Cloudinary
-        const result = await cloudinary.v2.uploader.upload(
-          (files as any).tempFilePath
-        );
-        pictureUrls.push(result.secure_url);
-      }
+    // Validation des champs obligatoires
+    if (!title || !description || !price || !city || !brand || !color) {
+      res.status(400).json({
+        message:
+          "Veuillez remplir tous les champs obligatoires (titre, description, prix, ville, marque, couleur).",
+      });
+      return;
     }
 
-    // Création de la nouvelle offre
+    // Vérification des fichiers
+    if (!req.files || !req.files.pictures) {
+      res.status(400).json({ message: "Veuillez ajouter au moins une image." });
+      return;
+    }
+
+    const pictureUrls: string[] = [];
+
+    // Gestion des fichiers avec express-fileupload
+    const files = req.files.pictures;
+    const fileArray = Array.isArray(files) ? files : [files]; // Gère un ou plusieurs fichiers
+
+    for (const file of fileArray) {
+      const uploadedImage = await cloudinary.v2.uploader.upload(
+        file.tempFilePath
+      );
+      pictureUrls.push(uploadedImage.secure_url);
+    }
+
+    // Création et enregistrement de l'offre
     const newOffer = new Offer({
       userId,
       username,
       title,
       description,
       price,
-      condition,
       city,
       brand,
       size,
       color,
+      condition,
       pictures: pictureUrls,
     });
 
-    // Enregistrement de l'offre dans la base de données
     await newOffer.save();
 
-    res.status(200).json({
+    res.status(201).json({
       message: "Offre publiée avec succès.",
       offer: newOffer,
     });
   } catch (error) {
-    console.error("Erreur lors de la publication de l'offre:", error);
-    res.status(500).json({ message: "Erreur interne du serveur." });
+    console.error("Erreur lors de la publication de l'offre :", error);
+    next(error); // Transmet l'erreur au middleware suivant
   }
 };
 
