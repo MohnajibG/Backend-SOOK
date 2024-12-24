@@ -24,7 +24,18 @@ const OfferSchema: Schema = new Schema(
     },
     title: { type: String, required: true },
     description: { type: String, required: true },
-    price: { type: Number, required: true },
+    price: {
+      type: Number,
+      required: true,
+      min: [0, "Le prix doit être positif."],
+      validate: {
+        validator: function (value: number) {
+          return /^\d+(\.\d{1,2})?$/.test(value.toString());
+        },
+        message:
+          "Le prix doit être un nombre avec au maximum deux chiffres après la virgule.",
+      },
+    },
     condition: { type: String, required: true },
     city: { type: String, required: true },
     brand: { type: String, required: true },
