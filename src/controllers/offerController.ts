@@ -1,14 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import cloudinary from "cloudinary";
 import Offer from "../models/Offer";
 import { SortOrder } from "mongoose";
-
-// Configuration Cloudinary
-cloudinary.v2.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
-  api_key: process.env.CLOUDINARY_API_KEY!,
-  api_secret: process.env.CLOUDINARY_API_SECRET!,
-});
+import { v2 as cloudinary } from "cloudinary";
 
 // Fonction pour publier une offre
 export const publishOffer = async (
@@ -39,6 +32,11 @@ export const publishOffer = async (
       return;
     }
 
+    if (isNaN(price) || price <= 0) {
+      res.status(400).json({ message: "Le prix doit être un nombre positif." });
+      return;
+    }
+
     // Vérification des fichiers
     if (!req.files || !req.files.pictures) {
       res.status(400).json({ message: "Veuillez ajouter au moins une image." });
@@ -46,19 +44,22 @@ export const publishOffer = async (
     }
 
     const pictureUrls: string[] = [];
-
-    // Gestion des fichiers avec express-fileupload
     const files = req.files.pictures;
-    const fileArray = Array.isArray(files) ? files : [files]; // Gère un ou plusieurs fichiers
+    const fileArray = Array.isArray(files) ? files : [files];
 
     for (const file of fileArray) {
-      const uploadedImage = await cloudinary.v2.uploader.upload(
-        file.tempFilePath
-      );
-      pictureUrls.push(uploadedImage.secure_url);
+      try {
+        const uploadedImage = await cloudinary.uploader.upload(
+          file.tempFilePath
+        );
+        pictureUrls.push(uploadedImage.secure_url);
+      } catch (err) {
+        console.error("Erreur lors du téléchargement de l'image :", err);
+        res.status(500).json({ message: "Échec de l'upload des images." });
+        return;
+      }
     }
 
-    // Création et enregistrement de l'offre
     const newOffer = new Offer({
       userId,
       username,
@@ -67,9 +68,9 @@ export const publishOffer = async (
       price,
       city,
       brand,
-      size,
+      size: size || null,
       color,
-      condition,
+      condition: condition || null,
       pictures: pictureUrls,
     });
 
@@ -81,62 +82,54 @@ export const publishOffer = async (
     });
   } catch (error) {
     console.error("Erreur lors de la publication de l'offre :", error);
-    next(error); // Transmet l'erreur au middleware suivant
+    next(error);
   }
 };
 
-// Fonction pour récupérer toutes les offres avec tri et pagination
+// Fonction pour récupérer les offres
 export const getOffers = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    // Récupération des paramètres de tri et pagination
     const sortField = (req.query.sort as string) || "createdAt";
     const sortOrder: SortOrder = req.query.order === "asc" ? 1 : -1;
     const limit = Number(req.query.limit) || 10;
     const page = Number(req.query.page) || 1;
     const skip = (page - 1) * limit;
 
-    // Validation des paramètres limit et page
-    if (isNaN(limit) || limit <= 0) {
+    if (isNaN(limit) || limit <= 0 || isNaN(page) || page <= 0) {
       res
         .status(400)
-        .json({ message: "Le paramètre 'limit' doit être un nombre positif." });
+        .json({
+          message:
+            "Les paramètres 'limit' et 'page' doivent être des nombres positifs.",
+        });
       return;
     }
 
-    if (isNaN(page) || page <= 0) {
-      res
-        .status(400)
-        .json({ message: "Le paramètre 'page' doit être un nombre positif." });
-      return;
-    }
-
-    // Création de l'objet de tri
     const sortOption: Record<string, SortOrder> = { [sortField]: sortOrder };
-
-    // Récupération des offres avec tri, pagination et limite
+    const totalOffers = await Offer.countDocuments();
     const offers = await Offer.find()
       .sort(sortOption)
       .limit(limit)
       .skip(skip)
       .populate("userId", "username avatar");
 
-    if (!offers || offers.length === 0) {
-      res.status(404).json({ message: "Aucune offre trouvée." });
-      return;
-    }
-
-    res.status(200).json({ offers });
+    res.status(200).json({
+      offers,
+      totalOffers,
+      totalPages: Math.ceil(totalOffers / limit),
+      currentPage: page,
+    });
   } catch (error) {
     console.error("Erreur lors de la récupération des offres:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
 
-// Fonction pour rechercher des offres par mot-clé
+// Fonction pour rechercher des offres
 export const searchOffers = async (
   req: Request,
   res: Response,
@@ -144,7 +137,6 @@ export const searchOffers = async (
 ): Promise<void> => {
   const { keyword } = req.query;
 
-  // Validation du mot-clé
   if (!keyword || typeof keyword !== "string") {
     res
       .status(400)
@@ -154,12 +146,9 @@ export const searchOffers = async (
 
   try {
     const regex = new RegExp(keyword, "i");
-    const offers = await Offer.find({ title: regex });
-
-    if (!offers || offers.length === 0) {
-      res.status(404).json({ message: "Aucune offre correspondante trouvée." });
-      return;
-    }
+    const offers = await Offer.find({
+      $or: [{ title: regex }, { description: regex }, { brand: regex }],
+    });
 
     res.status(200).json({ offers });
   } catch (error) {

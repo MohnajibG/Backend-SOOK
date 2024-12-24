@@ -7,8 +7,17 @@ import profileRoutes from "./routes/profileRoutes";
 
 import offerRoutes from "./routes/offerRoutes";
 import fileUpload from "express-fileupload";
+import cloudinary from "cloudinary";
+
+// Configuration Cloudinary
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+  api_key: process.env.CLOUDINARY_API_KEY!,
+  api_secret: process.env.CLOUDINARY_API_SECRET!,
+});
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
@@ -34,12 +43,7 @@ const connectMongoDB = async () => {
 };
 connectMongoDB();
 
-app.use(
-  fileUpload({
-    useTempFiles: true, // Permet d'utiliser tempFilePath
-    tempFileDir: "/tmp/",
-  })
-);
+app.use(fileUpload());
 
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json("Welcome to SOOOOK!!!");
