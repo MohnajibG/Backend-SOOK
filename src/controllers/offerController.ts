@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import Offer from "../models/Offer";
 import { SortOrder } from "mongoose";
 import { v2 as cloudinary } from "cloudinary";
+import fileUpload from "express-fileupload";
 
 // Fonction pour publier une offre
 export const publishOffer = async (
@@ -100,12 +101,10 @@ export const getOffers = async (
     const skip = (page - 1) * limit;
 
     if (isNaN(limit) || limit <= 0 || isNaN(page) || page <= 0) {
-      res
-        .status(400)
-        .json({
-          message:
-            "Les paramètres 'limit' et 'page' doivent être des nombres positifs.",
-        });
+      res.status(400).json({
+        message:
+          "Les paramètres 'limit' et 'page' doivent être des nombres positifs.",
+      });
       return;
     }
 

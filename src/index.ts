@@ -21,7 +21,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Assure-toi d'utiliser un préfixe, par exemple "/user"
 app.use("/user", userRoutes);
 app.use("/user", profileRoutes);
 
@@ -49,12 +48,10 @@ app.get("/", (req: Request, res: Response) => {
   res.status(200).json("Welcome to SOOOOK!!!");
 });
 
-// Pour capturer les routes non trouvées
 app.all("*", (req: Request, res: Response) => {
   res.status(404).json({ message: "404, on t'a dit" });
 });
 
-// Lancement du serveur
 app.listen(process.env.PORT, () => {
   console.log(`Server STARTED 📡 on port ${process.env.PORT}`);
 });
