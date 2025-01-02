@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import Offer from "../models/Offer";
 import { SortOrder } from "mongoose";
 import { v2 as cloudinary } from "cloudinary";
-import fileUpload from "express-fileupload";
+// import fileUpload from "express-fileupload";
 
 // Fonction pour publier une offre
 export const publishOffer = async (
