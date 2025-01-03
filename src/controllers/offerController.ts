@@ -158,7 +158,7 @@ export const searchOffers = async (
 
 export const getOfferById = async (req: Request, res: Response) => {
   try {
-    const offer = await Offer.findById(req.params.offerId).populate(
+    const offer = await Offer.findById(req.params.id).populate(
       "userId",
       "username avatar"
     );
@@ -170,7 +170,6 @@ export const getOfferById = async (req: Request, res: Response) => {
 
     res.status(200).json({ offer });
   } catch (error) {
-    console.error("Erreur lors de la récupération de l'offre :", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };

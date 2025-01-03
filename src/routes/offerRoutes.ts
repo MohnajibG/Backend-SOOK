@@ -7,7 +7,6 @@ import {
 } from "../controllers/offerController";
 
 import isAuthenticated from "../middlewares/isAuthenticated";
-import { get } from "http";
 
 const router = express.Router();
 
