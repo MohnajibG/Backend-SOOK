@@ -13,7 +13,7 @@ const router = express.Router();
 
 router.get("/offers", getOffers);
 router.get("/offers/search", searchOffers);
-router.post("/offers/:offerId", getOfferById);
+router.get("/offers/:id", getOfferById);
 
 router.post("/offers/publish", isAuthenticated, publishOffer);
 
