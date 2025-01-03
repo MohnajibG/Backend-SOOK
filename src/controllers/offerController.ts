@@ -155,3 +155,22 @@ export const searchOffers = async (
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
+
+export const getOfferById = async (req: Request, res: Response) => {
+  try {
+    const offer = await Offer.findById(req.params.offerId).populate(
+      "userId",
+      "username avatar"
+    );
+
+    if (!offer) {
+      res.status(404).json({ message: "Offre non trouvée." });
+      return;
+    }
+
+    res.status(200).json({ offer });
+  } catch (error) {
+    console.error("Erreur lors de la récupération de l'offre :", error);
+    res.status(500).json({ message: "Erreur interne du serveur." });
+  }
+};
