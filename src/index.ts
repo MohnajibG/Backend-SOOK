@@ -26,6 +26,8 @@ app.use("/user", profileRoutes);
 
 app.use(offerRoutes);
 
+// app.use("/cart", require("./routes/cartRoutes"));
+
 require("dotenv").config();
 
 const connectMongoDB = async () => {
