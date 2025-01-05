@@ -1,6 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-// Interface pour le modèle d'offre
 interface Offer extends Document {
   userId: mongoose.Types.ObjectId;
   title: string;
@@ -11,7 +10,7 @@ interface Offer extends Document {
   brand: string;
   size: string;
   color: string;
-  pictures: string[]; // Tableau d'URLs des images
+  pictures: string[];
   createdAt: Date;
 }
 
@@ -19,7 +18,7 @@ const OfferSchema: Schema = new Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // Référence au modèle "User"
+      ref: "User",
       required: true,
     },
     title: { type: String, required: true },
@@ -37,17 +36,34 @@ const OfferSchema: Schema = new Schema(
       },
     },
     condition: { type: String, required: true },
-    city: { type: String, required: true },
+    city: {
+      type: String,
+      required: true,
+      match: [
+        /^[a-zA-Z\s-]+$/,
+        "La ville doit contenir uniquement des lettres.",
+      ],
+    },
     brand: { type: String, required: true },
     size: { type: String, required: true },
     color: { type: String, required: true },
-    pictures: { type: [String], required: true }, // Tableau d'URLs des images
-    createdAt: { type: Date, default: Date.now },
+    pictures: {
+      type: [String],
+      required: true,
+      validate: {
+        validator: function (value: string[]) {
+          return value.every((url) =>
+            /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/.test(url)
+          );
+        },
+        message: "Toutes les images doivent être des URLs valides.",
+      },
+      createdAt: { type: Date, default: Date.now },
+    },
   },
-  { timestamps: true } // Pour avoir les champs createdAt et updatedAt automatiquement
+  { timestamps: true }
 );
 
-// Création du modèle Mongoose basé sur le schéma
 const OfferModel = mongoose.model<Offer>("Offer", OfferSchema);
 
 export default OfferModel;

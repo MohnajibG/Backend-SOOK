@@ -20,13 +20,12 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(fileUpload({ useTempFiles: true }));
 
 app.use("/user", userRoutes);
 app.use("/user", profileRoutes);
 
 app.use(offerRoutes);
-
-// app.use("/cart", require("./routes/cartRoutes"));
 
 require("dotenv").config();
 

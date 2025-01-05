@@ -158,10 +158,9 @@ export const searchOffers = async (
 
 export const getOfferById = async (req: Request, res: Response) => {
   try {
-    const offer = await Offer.findById(req.params.id).populate(
-      "userId",
-      "username avatar"
-    );
+    const offer = await Offer.findById(req.params.id)
+      .populate("userId", "username avatar")
+      .select("-__v");
 
     if (!offer) {
       res.status(404).json({ message: "Offre non trouvée." });
