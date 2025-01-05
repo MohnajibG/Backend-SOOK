@@ -160,8 +160,7 @@ export const getOfferById = async (req: Request, res: Response) => {
   try {
     const offer = await Offer.findById(req.params.id).populate(
       "userId",
-      "username",
-      "avatar"
+      "username avatar"
     );
 
     if (!offer) {
