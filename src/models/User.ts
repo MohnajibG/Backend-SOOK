@@ -5,6 +5,7 @@ export interface UserProps {
   email: string;
   password: string;
   account: {
+    username: string;
     avatar?: string;
     sexe?: "Homme" | "Femme" | "Autre";
     dateOfBorn?: string;

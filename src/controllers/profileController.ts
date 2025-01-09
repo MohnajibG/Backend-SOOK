@@ -6,6 +6,7 @@ export const updateProfile = async (
     { userId: string },
     {},
     {
+      username?: string;
       sexe: string;
       dateOfBorn: string;
       address: string;
@@ -65,6 +66,7 @@ export const updateProfile = async (
     res.status(200).json({
       message: "Profil mis à jour avec succès.",
       account: {
+        username: updatedUser.account.username,
         sexe: updatedUser.account.sexe,
         dateOfBorn: updatedUser.account.dateOfBorn,
         address: updatedUser.account.address,
