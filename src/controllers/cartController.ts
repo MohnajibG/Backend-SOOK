@@ -18,7 +18,7 @@ export const addCart = async (req: Request, res: Response) => {
     }
     res.status(200).json({ message: "produit ajouter dans le panier " });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: (error as Error).message });
   }
 };
 
@@ -27,7 +27,7 @@ export const getCart = async (req: Request, res: Response) => {
     const cart = await Cart.find();
     res.status(200).json(cart);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: (error as Error).message });
   }
 };
 
@@ -42,7 +42,7 @@ export const deleteCart = async (req: Request, res: Response) => {
       res.status(404).json({ error: "Article non trouvé dans le panier" });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: (error as Error).message });
   }
 };
 
