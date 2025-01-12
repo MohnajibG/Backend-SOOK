@@ -1,5 +1,7 @@
 import express, { Response, Request } from "express";
 import mongoose from "mongoose";
+import { createServer } from "http";
+import { Server, Socket } from "socket.io";
 import cors from "cors";
 
 import userRoutes from "./routes/userRoutes";
@@ -17,6 +19,13 @@ cloudinary.v2.config({
 });
 
 const app = express();
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
 
 app.use(cors());
 app.use(express.json());
@@ -26,6 +35,16 @@ app.use("/user", userRoutes);
 app.use("/user", profileRoutes);
 
 app.use(offerRoutes);
+
+io.on("connection", (socket: Socket) => {
+  console.log("un utilisateur s/'est connecté");
+  socket.on("message", (data: string) => {
+    io.emit("message", data);
+  });
+  socket.on("disconnect", () => {
+    console.log("un utilisateur s/'est déconnecté");
+  });
+});
 
 require("dotenv").config();
 
