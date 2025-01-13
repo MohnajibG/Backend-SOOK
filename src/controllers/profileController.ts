@@ -1,12 +1,13 @@
 import { NextFunction, Request, Response } from "express";
 import User from "../models/User";
 
+// Mise à jour du profil utilisateur
 export const updateProfile = async (
   req: Request<
-    { userId: string },
+    { userId: string }, // Typage des paramètres de requête
     {},
     {
-      username?: string;
+      username?: string; // Typage du corps de la requête
       sexe: string;
       dateOfBorn: string;
       address: string;
@@ -19,7 +20,7 @@ export const updateProfile = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { userId } = req.params;
+  const { userId } = req.params; // Extraction des paramètres de requête
   const {
     sexe,
     dateOfBorn,
@@ -28,8 +29,9 @@ export const updateProfile = async (
     phoneNumber,
     country,
     avatar,
-  } = req.body;
+  } = req.body; // Extraction des données du corps de la requête
 
+  // Validation des champs obligatoires
   if (!address || !phoneNumber || !country || !sexe || !dateOfBorn) {
     res.status(400).json({
       message:
@@ -39,6 +41,7 @@ export const updateProfile = async (
   }
 
   try {
+    // Mise à jour des informations utilisateur
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
@@ -53,16 +56,18 @@ export const updateProfile = async (
         },
       },
       {
-        new: true,
-        runValidators: true,
+        new: true, // Retourner le document mis à jour
+        runValidators: true, // Appliquer les validateurs définis dans le modèle
       }
     );
 
+    // Vérifier si l'utilisateur existe
     if (!updatedUser) {
       res.status(404).json({ message: "Utilisateur non trouvé." });
       return;
     }
 
+    // Réponse avec les données mises à jour
     res.status(200).json({
       message: "Profil mis à jour avec succès.",
       account: {
@@ -82,21 +87,25 @@ export const updateProfile = async (
   }
 };
 
+// Récupération du profil utilisateur
 export const getUserProfile = async (
-  req: Request<{ userId: string }>,
+  req: Request<{ userId: string }>, // Typage des paramètres de requête
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { userId } = req.params;
+  const { userId } = req.params; // Extraction des paramètres de requête
 
   try {
+    // Recherche de l'utilisateur par ID
     const user = await User.findById(userId);
 
+    // Vérifier si l'utilisateur existe
     if (!user) {
       res.status(404).json({ message: "Utilisateur non trouvé" });
       return;
     }
 
+    // Réponse avec les données utilisateur
     res.status(200).json(user);
   } catch (error) {
     console.error("Erreur lors de la récupération du profil :", error);
