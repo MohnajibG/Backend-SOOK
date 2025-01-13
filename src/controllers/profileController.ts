@@ -7,6 +7,9 @@ export const updateProfile = async (
     { userId: string }, // Typage des paramètres de requête
     {},
     {
+      userId: string;
+      prodeuctId: any;
+      quantity: any;
       username?: string; // Typage du corps de la requête
       sexe: string;
       dateOfBorn: string;
@@ -20,7 +23,7 @@ export const updateProfile = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { userId } = req.params; // Extraction des paramètres de requête
+  const { userId } = req.params;
   const {
     sexe,
     dateOfBorn,
@@ -29,7 +32,7 @@ export const updateProfile = async (
     phoneNumber,
     country,
     avatar,
-  } = req.body; // Extraction des données du corps de la requête
+  } = req.body;
 
   // Validation des champs obligatoires
   if (!address || !phoneNumber || !country || !sexe || !dateOfBorn) {
@@ -89,11 +92,11 @@ export const updateProfile = async (
 
 // Récupération du profil utilisateur
 export const getUserProfile = async (
-  req: Request<{ userId: string }>, // Typage des paramètres de requête
+  req: Request<{ userId: string }>,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { userId } = req.params; // Extraction des paramètres de requête
+  const { userId } = req.params;
 
   try {
     // Recherche de l'utilisateur par ID

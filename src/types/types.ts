@@ -43,9 +43,9 @@ declare module "express-serve-static-core" {
 }
 export interface AuthenticatedRequest {
   headers: any;
-  params: { id: any };
+  params: { id: any; userId: string };
 
-  body: { userId: any; prodeuctId: any; quantity: any };
+  body: { userId: string; prodeuctId: any; quantity: any };
   user?: {
     id: string;
     name?: string;
