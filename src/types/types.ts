@@ -1,3 +1,6 @@
+import "express-fileupload";
+import { FileArray } from "express-fileupload";
+
 export interface SignupRequestBody {
   username: string;
   email: string;
@@ -16,8 +19,6 @@ export interface UpdateprofileUpdateParams {
   userId: string; // Ici, on spécifie que userId est un string dans les paramètres de la route
 }
 
-import "express-fileupload";
-import { FileArray } from "express-fileupload";
 declare module "express-fileupload" {
   interface UploadedFile {
     name: string;
@@ -39,4 +40,15 @@ declare module "express-serve-static-core" {
   interface Request {
     files?: FileArray;
   }
+}
+export interface AuthenticatedRequest {
+  headers: any;
+  params: { id: any };
+
+  body: { userId: any; prodeuctId: any; quantity: any };
+  user?: {
+    id: string;
+    name?: string;
+    email?: string;
+  };
 }

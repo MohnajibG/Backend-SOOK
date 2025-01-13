@@ -1,9 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import User from "../models/User";
 
-interface AuthenticatedRequest extends Request {
-  user: any;
-}
+import { AuthenticatedRequest } from "../types/types";
 
 const isAuthenticated = async (
   req: AuthenticatedRequest,
@@ -11,22 +9,44 @@ const isAuthenticated = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    if (!req.headers.authorization) {
+    // Vérifiez si le header Authorization est présent
+    const authorizationHeader = req.headers.authorization;
+    if (!authorizationHeader) {
       res.status(401).json({ message: "Unauthorized 🤟🏻" });
       return;
     }
 
-    const token = req.headers.authorization.replace("Bearer ", "");
-    const user = await User.findOne({ token: token });
-
-    if (!user) {
-      res.status(401).json({ message: "Unauthorized🙀" });
+    // Extraire et nettoyer le token
+    const token = authorizationHeader.replace("Bearer ", "");
+    if (!token) {
+      res.status(401).json({ message: "Unauthorized 🤟🏻" });
       return;
     }
 
-    req.user = user;
+    // Cherchez l'utilisateur correspondant au token dans la base de données
+    const user = (await User.findOne({ token }).lean().exec()) as {
+      _id: string;
+      name?: string;
+      email?: string;
+    } | null; // Assurez-vous que votre modèle User a une propriété `token`.
+
+    if (!user) {
+      res.status(401).json({ message: "Unauthorized 🙀" });
+      return;
+    }
+
+    // Ajouter l'utilisateur au `req` pour une utilisation ultérieure
+    req.user = {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+    };
+
+    // Passer au middleware ou contrôleur suivant
     return next();
   } catch (error) {
+    // Gérer les erreurs éventuelles
+    console.error("Erreur dans isAuthenticated:", error);
     res.status(500).json({ error: (error as Error).message });
     return;
   }

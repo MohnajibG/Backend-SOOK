@@ -1,7 +1,10 @@
-import { Request, Response } from "express";
+import { Response } from "express";
+
+import { AuthenticatedRequest } from "../types/types";
+
 import Cart from "../models/Cart";
 
-export const addCart = async (req: Request, res: Response) => {
+export const addCart = async (req: AuthenticatedRequest, res: Response) => {
   const { userId, prodeuctId, quantity } = req.body;
   try {
     const cartItem = await Cart.findOne();
@@ -22,7 +25,7 @@ export const addCart = async (req: Request, res: Response) => {
   }
 };
 
-export const getCart = async (req: Request, res: Response) => {
+export const getCart = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const cart = await Cart.find();
     res.status(200).json(cart);
@@ -31,7 +34,7 @@ export const getCart = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteCart = async (req: Request, res: Response) => {
+export const deleteCart = async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
   try {
     const result = await Cart.findOneAndDelete({ id });
@@ -46,7 +49,7 @@ export const deleteCart = async (req: Request, res: Response) => {
   }
 };
 
-export const updateCart = async (req: Request, res: Response) => {
+export const updateCart = async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
   const { quantity } = req.body;
 
