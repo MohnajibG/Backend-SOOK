@@ -1,8 +1,6 @@
 import "express-fileupload";
 import { FileArray } from "express-fileupload";
 
-const stripe = require("stripe")("pmc_1QgqTfP7qV02XPrQTtNEe4UT");
-
 export interface SignupRequestBody {
   username: string;
   email: string;

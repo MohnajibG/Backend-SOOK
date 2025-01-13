@@ -1,7 +1,6 @@
 import express, { Response, Request } from "express";
-import mongoose from "mongoose";
-import { createServer } from "http";
-import { Server, Socket } from "socket.io";
+import connectMongoDB from "./config/db";
+
 import cors from "cors";
 
 import userRoutes from "./routes/userRoutes";
@@ -18,16 +17,7 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
 
-// const stripe = require("stripe")("pmc_1QgqTfP7qV02XPrQTtNEe4UT");
-
 const app = express();
-// const server = createServer(app);
-// const io = new Server(server, {
-//   cors: {
-//     origin: "*",
-//     methods: ["GET", "POST"],
-//   },
-// });
 
 app.use(cors());
 app.use(express.json());
@@ -38,51 +28,11 @@ app.use("/user", profileRoutes);
 
 app.use(offerRoutes);
 
-// io.on("connection", (socket: Socket) => {
-//   console.log("un utilisateur s/'est connecté");
-//   socket.on("message", (data: string) => {
-//     io.emit("message", data);
-//   });
-//   socket.on("disconnect", () => {
-//     console.log("un utilisateur s/'est déconnecté");
-//   });
-// });
-
 require("dotenv").config();
 
-const connectMongoDB = async () => {
-  try {
-    if (!process.env.MONGODB_URI) {
-      console.log("MONGODB_URI is not defined in the environment variables");
-      return;
-    }
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log("Connected to MongoDB ✅");
-  } catch (error) {
-    console.log("Error connecting to MongoDB 🛑:", error);
-  }
-};
 connectMongoDB();
 
 app.use(fileUpload());
-
-// app.post("/payment", async (req, res) => {
-//   try {
-//     // On crée une intention de paiement
-//     const paymentIntent = await stripe.paymentIntents.create({
-//       // Montant de la transaction
-//       amount: 2000,
-//       // Devise de la transaction
-//       currency: "usd",
-//       // Description du produit
-//       description: "La description du produit",
-//     });
-//     // On renvoie les informations de l'intention de paiement au client
-//     res.json(paymentIntent);
-//   } catch (error) {
-//     res.status(500).json({ message: (error as Error).message });
-//   }
-// });
 
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json("Welcome to SOOOOK!!!");
