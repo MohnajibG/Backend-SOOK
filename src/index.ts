@@ -18,16 +18,16 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
 
-const stripe = require("stripe")("pmc_1QgqTfP7qV02XPrQTtNEe4UT");
+// const stripe = require("stripe")("pmc_1QgqTfP7qV02XPrQTtNEe4UT");
 
 const app = express();
-const server = createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-  },
-});
+// const server = createServer(app);
+// const io = new Server(server, {
+//   cors: {
+//     origin: "*",
+//     methods: ["GET", "POST"],
+//   },
+// });
 
 app.use(cors());
 app.use(express.json());
@@ -38,15 +38,15 @@ app.use("/user", profileRoutes);
 
 app.use(offerRoutes);
 
-io.on("connection", (socket: Socket) => {
-  console.log("un utilisateur s/'est connecté");
-  socket.on("message", (data: string) => {
-    io.emit("message", data);
-  });
-  socket.on("disconnect", () => {
-    console.log("un utilisateur s/'est déconnecté");
-  });
-});
+// io.on("connection", (socket: Socket) => {
+//   console.log("un utilisateur s/'est connecté");
+//   socket.on("message", (data: string) => {
+//     io.emit("message", data);
+//   });
+//   socket.on("disconnect", () => {
+//     console.log("un utilisateur s/'est déconnecté");
+//   });
+// });
 
 require("dotenv").config();
 
@@ -66,23 +66,23 @@ connectMongoDB();
 
 app.use(fileUpload());
 
-app.post("/payment", async (req, res) => {
-  try {
-    // On crée une intention de paiement
-    const paymentIntent = await stripe.paymentIntents.create({
-      // Montant de la transaction
-      amount: 2000,
-      // Devise de la transaction
-      currency: "usd",
-      // Description du produit
-      description: "La description du produit",
-    });
-    // On renvoie les informations de l'intention de paiement au client
-    res.json(paymentIntent);
-  } catch (error) {
-    res.status(500).json({ message: (error as Error).message });
-  }
-});
+// app.post("/payment", async (req, res) => {
+//   try {
+//     // On crée une intention de paiement
+//     const paymentIntent = await stripe.paymentIntents.create({
+//       // Montant de la transaction
+//       amount: 2000,
+//       // Devise de la transaction
+//       currency: "usd",
+//       // Description du produit
+//       description: "La description du produit",
+//     });
+//     // On renvoie les informations de l'intention de paiement au client
+//     res.json(paymentIntent);
+//   } catch (error) {
+//     res.status(500).json({ message: (error as Error).message });
+//   }
+// });
 
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json("Welcome to SOOOOK!!!");
@@ -92,6 +92,6 @@ app.all("*", (req: Request, res: Response) => {
   res.status(404).json({ message: "404, on t'a dit" });
 });
 
-server.listen(process.env.PORT, () => {
+app.listen(process.env.PORT, () => {
   console.log(`Server STARTED 📡 on port ${process.env.PORT}`);
 });
