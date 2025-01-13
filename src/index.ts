@@ -72,6 +72,6 @@ app.all("*", (req: Request, res: Response) => {
   res.status(404).json({ message: "404, on t'a dit" });
 });
 
-app.listen(process.env.PORT, () => {
+server.listen(process.env.PORT, () => {
   console.log(`Server STARTED 📡 on port ${process.env.PORT}`);
 });
