@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import Offer from "../models/Offer";
 import { SortOrder } from "mongoose";
 import { v2 as cloudinary } from "cloudinary";
-// import fileUpload from "express-fileupload";
 
 // Fonction pour publier une offre
 export const publishOffer = async (
@@ -44,23 +43,26 @@ export const publishOffer = async (
       return;
     }
 
-    const pictureUrls: string[] = [];
     const files = req.files.pictures;
     const fileArray = Array.isArray(files) ? files : [files];
 
-    for (const file of fileArray) {
-      try {
-        const uploadedImage = await cloudinary.uploader.upload(
-          file.tempFilePath
-        );
-        pictureUrls.push(uploadedImage.secure_url);
-      } catch (err) {
-        console.error("Erreur lors du téléchargement de l'image :", err);
-        res.status(500).json({ message: "Échec de l'upload des images." });
-        return;
-      }
+    // Téléchargement des images sur Cloudinary
+    let pictureUrls: string[];
+    try {
+      pictureUrls = await Promise.all(
+        fileArray.map((file) =>
+          cloudinary.uploader
+            .upload(file.tempFilePath)
+            .then((result) => result.secure_url)
+        )
+      );
+    } catch (uploadError) {
+      console.error("Erreur lors de l'upload des images :", uploadError);
+      res.status(500).json({ message: "Échec de l'upload des images." });
+      return;
     }
 
+    // Création de l'offre
     const newOffer = new Offer({
       userId,
       username,
