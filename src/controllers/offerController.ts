@@ -3,7 +3,6 @@ import Offer from "../models/Offer";
 import { SortOrder } from "mongoose";
 import { v2 as cloudinary } from "cloudinary";
 
-// Fonction pour publier une offre
 export const publishOffer = async (
   req: Request,
   res: Response,
@@ -21,6 +20,7 @@ export const publishOffer = async (
       condition,
       userId,
       username,
+      pictures, // Les URLs des images sont envoyées sous ce champ
     } = req.body;
 
     // Validation des champs obligatoires
@@ -37,32 +37,13 @@ export const publishOffer = async (
       return;
     }
 
-    // Vérification des fichiers
-    if (!req.files || !req.files.pictures) {
+    // Vérification des URLs des images
+    if (!pictures || (Array.isArray(pictures) && pictures.length === 0)) {
       res.status(400).json({ message: "Veuillez ajouter au moins une image." });
       return;
     }
 
-    const files = req.files.pictures;
-    const fileArray = Array.isArray(files) ? files : [files];
-
-    // Téléchargement des images sur Cloudinary
-    let pictureUrls: string[];
-    try {
-      pictureUrls = await Promise.all(
-        fileArray.map((file) =>
-          cloudinary.uploader
-            .upload(file.tempFilePath)
-            .then((result) => result.secure_url)
-        )
-      );
-    } catch (uploadError) {
-      console.error("Erreur lors de l'upload des images :", uploadError);
-      res.status(500).json({ message: "Échec de l'upload des images." });
-      return;
-    }
-
-    // Création de l'offre
+    // Création de l'offre avec les URLs des images
     const newOffer = new Offer({
       userId,
       username,
@@ -74,11 +55,13 @@ export const publishOffer = async (
       size: size || null,
       color,
       condition: condition || null,
-      pictures: pictureUrls,
+      pictures, // Utilisation des URLs d'images envoyées
     });
 
+    // Sauvegarde de l'offre dans la base de données
     await newOffer.save();
 
+    // Réponse réussie
     res.status(201).json({
       message: "Offre publiée avec succès.",
       offer: newOffer,
@@ -88,7 +71,6 @@ export const publishOffer = async (
     next(error);
   }
 };
-
 // Fonction pour récupérer les offres
 export const getOffers = async (
   req: Request,
