@@ -59,17 +59,17 @@ export const publishOffer = async (
 
     // Sauvegarde de l'offre dans la base de données
     await newOffer.save();
-    const populatedOffer = await newOffer.populate(
-      "userId",
-      "account.username"
-    );
+    const populatedOffer = await Offer.findById(newOffer._id).populate({
+      path: "userId",
+      select: "account.username", // Inclut uniquement `username` dans la réponse
+    });
 
     // Réponse réussie
     res.status(201).json({
       message: "Offre publiée avec succès.",
       offer: {
-        ...populatedOffer.toObject(),
-        username: populatedOffer.userId.account.username, // Inclure uniquement le username
+        ...populatedOffer?.toObject(),
+        username: populatedOffer?.userId.account.username, // Inclure uniquement le username
       },
     });
   } catch (error) {
