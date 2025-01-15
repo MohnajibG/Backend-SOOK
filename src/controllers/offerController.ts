@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import Offer from "../models/Offer";
 import { SortOrder } from "mongoose";
-import { v2 as cloudinary } from "cloudinary";
 
 export const publishOffer = async (
   req: Request,
@@ -60,11 +59,18 @@ export const publishOffer = async (
 
     // Sauvegarde de l'offre dans la base de données
     await newOffer.save();
+    const populatedOffer = await newOffer.populate(
+      "userId",
+      "account.username"
+    );
 
     // Réponse réussie
     res.status(201).json({
       message: "Offre publiée avec succès.",
-      offer: newOffer,
+      offer: {
+        ...populatedOffer.toObject(),
+        username: populatedOffer.userId.account.username, // Inclure uniquement le username
+      },
     });
   } catch (error) {
     console.error("Erreur lors de la publication de l'offre :", error);
