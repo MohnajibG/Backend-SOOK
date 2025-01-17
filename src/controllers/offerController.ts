@@ -19,10 +19,9 @@ export const publishOffer = async (
       condition,
       userId,
       username,
-      pictures, // Les URLs des images sont envoyées sous ce champ
+      pictures,
     } = req.body;
 
-    // Validation des champs obligatoires
     if (!title || !description || !price || !city || !brand || !color) {
       res.status(400).json({
         message:
@@ -42,7 +41,6 @@ export const publishOffer = async (
       return;
     }
 
-    // Création de l'offre avec les URLs des images
     const newOffer = new Offer({
       userId,
       username,
@@ -54,22 +52,20 @@ export const publishOffer = async (
       size: size || null,
       color,
       condition: condition || null,
-      pictures, // Utilisation des URLs d'images envoyées
+      pictures,
     });
 
-    // Sauvegarde de l'offre dans la base de données
     await newOffer.save();
     const populatedOffer = await Offer.findById(newOffer._id).populate({
       path: "userId",
-      select: "account.username", // Inclut uniquement `username` dans la réponse
+      select: "account.username",
     });
 
-    // Réponse réussie
     res.status(201).json({
       message: "Offre publiée avec succès.",
       offer: {
         ...populatedOffer?.toObject(),
-        username: populatedOffer?.userId.account.username, // Inclure uniquement le username
+        username: populatedOffer?.userId.account.username,
       },
     });
   } catch (error) {
@@ -77,7 +73,6 @@ export const publishOffer = async (
     next(error);
   }
 };
-// Fonction pour récupérer les offres
 export const getOffers = async (
   req: Request,
   res: Response,
@@ -118,7 +113,6 @@ export const getOffers = async (
   }
 };
 
-// Fonction pour rechercher des offres
 export const searchOffers = async (
   req: Request,
   res: Response,

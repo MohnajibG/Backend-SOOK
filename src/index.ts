@@ -9,6 +9,7 @@ import profileRoutes from "./routes/profileRoutes";
 import offerRoutes from "./routes/offerRoutes";
 import fileUpload from "express-fileupload";
 import cloudinary from "cloudinary";
+import passport from "passport";
 
 // Configuration Cloudinary
 cloudinary.v2.config({
@@ -22,9 +23,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(fileUpload({ useTempFiles: true }));
+app.use(passport.initialize());
 
 app.use("/user", userRoutes);
 app.use("/user", profileRoutes);
+// app.use("/auth", googleAuthRoutes);
 
 app.use(offerRoutes);
 

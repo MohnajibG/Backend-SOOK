@@ -1,4 +1,6 @@
 import { Request, Response } from "express";
+import { OAuth2Client } from "google-auth-library";
+
 import uid2 from "uid2";
 import SHA256 from "crypto-js/sha256";
 import User from "../models/User";
@@ -140,3 +142,22 @@ export const login = async (
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
+
+const client = new OAuth2Client("sook-443123.apps.googleusercontent.com");
+
+async function verifyToken(req: Request, res: Response) {
+  const { token } = req.body;
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: "sook-443123.apps.googleusercontent.com", // Spécifie ton client ID ici
+    });
+    const payload = ticket.getPayload();
+    // Si l'utilisateur est authentifié, tu peux le traiter ici
+    res.json({ user: payload });
+  } catch (error) {
+    res.status(401).send("Invalid token");
+  }
+}
+
+export { verifyToken };
