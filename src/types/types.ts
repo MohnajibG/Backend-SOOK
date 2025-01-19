@@ -43,17 +43,15 @@ declare module "express-serve-static-core" {
   }
 }
 
-export interface AuthenticatedRequest extends Request {
-  params: { id: any };
-  user?: {
-    _id: string;
-    name?: string;
-    email?: string;
-    token?: string;
-  };
-  body: {
-    userId: string;
-    productId: string;
-    quantity: number;
-  };
+export interface User {
+  _id: string;
+  name?: string;
+  email?: string;
+  token?: string;
+}
+
+export interface CartPropos extends Request {
+  params: { [key: string]: string }; // Permet d'accepter différents paramètres (id, userId...)
+  user?: User;
+  body: Record<string, any>; // Permet de gérer différents types de corps de requête
 }

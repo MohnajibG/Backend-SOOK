@@ -1,8 +1,8 @@
-import { Response } from "express";
-import { AuthenticatedRequest } from "../types/types";
+import { Request, Response } from "express";
+import { CartPropos } from "../types/types";
 import Cart from "../models/Cart";
 
-export const addCart = async (req: AuthenticatedRequest, res: Response) => {
+export const addCart = async (req: Request, res: Response) => {
   const { userId, productId, quantity } = req.body;
 
   try {
@@ -22,12 +22,12 @@ export const addCart = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const getCart = async (req: AuthenticatedRequest, res: Response) => {
+export const getCart = async (req: Request, res: Response) => {
   try {
     const { userId } = req.body;
 
     if (!userId) {
-      return res.status(400).json({ error: "Utilisateur non identifié" });
+      res.status(400).json({ error: "Utilisateur non identifié" });
     }
 
     const cart = await Cart.find({ userId });
@@ -37,7 +37,7 @@ export const getCart = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const deleteCart = async (req: AuthenticatedRequest, res: Response) => {
+export const deleteCart = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
@@ -53,14 +53,12 @@ export const deleteCart = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const updateCart = async (req: AuthenticatedRequest, res: Response) => {
+export const updateCart = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { quantity } = req.body;
 
   if (quantity <= 0) {
-    return res
-      .status(400)
-      .json({ error: "La quantité doit être supérieure à zéro." });
+    res.status(400).json({ error: "La quantité doit être supérieure à zéro." });
   }
 
   try {
