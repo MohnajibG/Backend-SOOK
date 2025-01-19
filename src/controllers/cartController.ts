@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import { CartPropos } from "../types/types";
 import Cart from "../models/Cart";
 
 export const addCart = async (req: Request, res: Response) => {

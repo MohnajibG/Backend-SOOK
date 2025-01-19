@@ -10,6 +10,7 @@ import offerRoutes from "./routes/offerRoutes";
 import fileUpload from "express-fileupload";
 import cloudinary from "cloudinary";
 import passport from "passport";
+import cartRoutes from "./routes/cartRoutes";
 
 // Configuration Cloudinary
 cloudinary.v2.config({
@@ -27,6 +28,7 @@ app.use(passport.initialize());
 
 app.use("/user", userRoutes);
 app.use("/user", profileRoutes);
+app.use("/cart", cartRoutes);
 // app.use("/auth", googleAuthRoutes);
 
 app.use(offerRoutes);
