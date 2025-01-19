@@ -10,7 +10,8 @@ const isAuthenticated = async (
 ): Promise<void> => {
   try {
     // Vérifiez si le header Authorization est présent
-    const authorizationHeader = req.headers.authorization;
+    const authorizationHeader = (req.headers as { authorization?: string })
+      .authorization;
     if (!authorizationHeader) {
       res.status(401).json({ message: "Unauthorized 🤟🏻" });
       return;
@@ -37,7 +38,7 @@ const isAuthenticated = async (
 
     // Ajouter l'utilisateur au `req` pour une utilisation ultérieure
     req.user = {
-      id: user._id.toString(),
+      _id: user._id.toString(),
       name: user.name,
       email: user.email,
     };

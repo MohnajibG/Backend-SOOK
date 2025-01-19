@@ -1,3 +1,4 @@
+import { Request } from "express";
 import "express-fileupload";
 import { FileArray } from "express-fileupload";
 
@@ -41,14 +42,18 @@ declare module "express-serve-static-core" {
     files?: FileArray;
   }
 }
-export interface AuthenticatedRequest {
-  headers: any;
-  params: { id: any; userId: string };
 
-  body: { userId: string; prodeuctId: any; quantity: any };
+export interface AuthenticatedRequest extends Request {
+  params: { id: any };
   user?: {
-    id: string;
+    _id: string;
     name?: string;
     email?: string;
+    token?: string;
+  };
+  body: {
+    userId: string;
+    productId: string;
+    quantity: number;
   };
 }

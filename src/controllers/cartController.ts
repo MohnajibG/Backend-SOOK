@@ -1,25 +1,22 @@
 import { Response } from "express";
-
 import { AuthenticatedRequest } from "../types/types";
-
 import Cart from "../models/Cart";
 
 export const addCart = async (req: AuthenticatedRequest, res: Response) => {
-  const { userId, prodeuctId, quantity } = req.body;
+  const { userId, productId, quantity } = req.body;
+
   try {
-    const cartItem = await Cart.findOne();
+    let cartItem = await Cart.findOne({ userId, productId });
+
     if (cartItem) {
       cartItem.quantity += quantity;
       await cartItem.save();
     } else {
-      const newCartItem = new Cart({
-        userId,
-        prodeuctId,
-        quantity,
-      });
-      await newCartItem.save();
+      cartItem = new Cart({ userId, productId, quantity });
+      await cartItem.save();
     }
-    res.status(200).json({ message: "produit ajouter dans le panier " });
+
+    res.status(200).json({ message: "Produit ajouté au panier", cartItem });
   } catch (error) {
     res.status(500).json({ message: (error as Error).message });
   }
@@ -27,7 +24,13 @@ export const addCart = async (req: AuthenticatedRequest, res: Response) => {
 
 export const getCart = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const cart = await Cart.find();
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: "Utilisateur non identifié" });
+    }
+
+    const cart = await Cart.find({ userId });
     res.status(200).json(cart);
   } catch (error) {
     res.status(500).json({ message: (error as Error).message });
@@ -36,8 +39,9 @@ export const getCart = async (req: AuthenticatedRequest, res: Response) => {
 
 export const deleteCart = async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
+
   try {
-    const result = await Cart.findOneAndDelete({ id });
+    const result = await Cart.findByIdAndDelete(id);
 
     if (result) {
       res.status(200).json({ message: "Article supprimé du panier" });
@@ -54,14 +58,15 @@ export const updateCart = async (req: AuthenticatedRequest, res: Response) => {
   const { quantity } = req.body;
 
   if (quantity <= 0) {
-    res.status(400).json({ error: "La quantité doit être supérieure à zéro." });
+    return res
+      .status(400)
+      .json({ error: "La quantité doit être supérieure à zéro." });
   }
 
   try {
-    // Mettre à jour la quantité de l'article
-    const updatedItem = await Cart.findOneAndUpdate(
-      { id },
-      { $set: { quantity } },
+    const updatedItem = await Cart.findByIdAndUpdate(
+      id,
+      { quantity },
       { new: true }
     );
 
