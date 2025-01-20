@@ -11,8 +11,8 @@ import {
 const router = Router();
 
 router.get("/cart", isAuthenticated, getCart);
-router.post("/cart/add", isAuthenticated, addCart);
-router.delete("/cart/delete/:id", isAuthenticated, deleteCart);
-router.put("/cart/update/:id", isAuthenticated, updateCart);
+router.post("/add", isAuthenticated, addCart);
+router.delete("/delete/:id", isAuthenticated, deleteCart);
+router.put("/update/:id", isAuthenticated, updateCart);
 
 export default router;
