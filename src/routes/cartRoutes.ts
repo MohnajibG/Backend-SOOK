@@ -11,7 +11,7 @@ import {
 const router = Router();
 
 router.get("/cart", isAuthenticated, getCart);
-router.post("/add", isAuthenticated, addCart);
+router.post("/add", addCart);
 router.delete("/delete/:id", isAuthenticated, deleteCart);
 router.put("/update/:id", isAuthenticated, updateCart);
 
