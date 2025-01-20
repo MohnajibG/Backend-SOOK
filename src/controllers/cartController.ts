@@ -2,16 +2,16 @@ import { Request, Response } from "express";
 import Cart from "../models/Cart";
 
 export const addCart = async (req: Request, res: Response) => {
-  const { userId, productId, quantity } = req.body;
+  const { productId, quantity } = req.body;
 
   try {
-    let cartItem = await Cart.findOne({ userId, productId });
+    let cartItem = await Cart.findOne({ productId });
 
     if (cartItem) {
       cartItem.quantity += quantity;
       await cartItem.save();
     } else {
-      cartItem = new Cart({ userId, productId, quantity });
+      cartItem = new Cart({ productId, quantity });
       await cartItem.save();
     }
 
@@ -23,13 +23,7 @@ export const addCart = async (req: Request, res: Response) => {
 
 export const getCart = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.body;
-
-    if (!userId) {
-      res.status(400).json({ error: "Utilisateur non identifié" });
-    }
-
-    const cart = await Cart.find({ userId });
+    const cart = await Cart.find();
     res.status(200).json(cart);
   } catch (error) {
     res.status(500).json({ message: (error as Error).message });
