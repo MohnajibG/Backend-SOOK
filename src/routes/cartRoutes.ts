@@ -1,18 +1,16 @@
-import { Router } from "express";
-import isAuthenticated from "../middlewares/isAuthenticated";
-
+import express from "express";
 import {
-  getCart,
   addCart,
+  getCart,
   deleteCart,
   updateCart,
 } from "../controllers/cartController";
 
-const router = Router();
+const router = express.Router();
 
-router.get("/", getCart);
 router.post("/add", addCart);
-router.delete("/delete/:id", deleteCart);
-router.put("/update/:id", updateCart);
+router.get("/", getCart);
+router.delete("/:id", deleteCart);
+router.put("/:id", updateCart);
 
 export default router;

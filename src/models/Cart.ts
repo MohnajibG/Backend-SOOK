@@ -4,17 +4,17 @@ interface Cart {
   id: string;
   name: string;
   price: number;
-  quantity: number;
 }
+interface CartDocument extends Cart, Document {}
 
 const CartSchema = new Schema(
   {
     id: { type: String, required: true },
     name: { type: String, required: true },
     price: { type: Number, required: true },
-    quantity: { type: Number, required: true },
   },
   { timestamps: true }
 );
-const CartModel = mongoose.model<Cart>("Cart", CartSchema);
+
+const CartModel = mongoose.model<CartDocument>("Cart", CartSchema);
 export default CartModel;

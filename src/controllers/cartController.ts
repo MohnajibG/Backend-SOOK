@@ -1,23 +1,32 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction, RequestHandler } from "express";
 import Cart from "../models/Cart";
 
-export const addCart = async (req: Request, res: Response) => {
-  const { productId, quantity } = req.body;
-
+export const addCart: RequestHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
-    let cartItem = await Cart.findOne({ productId });
+    const { id, name, price } = req.body;
 
-    if (cartItem) {
-      cartItem.quantity += quantity;
-      await cartItem.save();
-    } else {
-      cartItem = new Cart({ productId, quantity });
-      await cartItem.save();
+    if (!id || !name || !price) {
+      res
+        .status(400)
+        .json({ message: "Tous les champs sont requis (id, name, price)." });
     }
 
-    res.status(200).json({ message: "Produit ajouté au panier", cartItem });
+    const existingCartItem = await Cart.findOne({ id });
+
+    if (existingCartItem) {
+      res.status(400).json({ message: "Ce produit est déjà dans le panier." });
+    }
+
+    const cartItem = new Cart({ id, name, price });
+    await cartItem.save();
+
+    res.status(201).json({ message: "Produit ajouté au panier", cartItem });
   } catch (error) {
-    res.status(500).json({ message: (error as Error).message });
+    next(error);
   }
 };
 
