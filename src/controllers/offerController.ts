@@ -69,15 +69,11 @@ export const publishOffer = async (
       },
     });
   } catch (error) {
-    console.error("Erreur lors de la publication de l'offre :", error);
+    console.log("Erreur lors de la publication de l'offre :", error);
     next(error);
   }
 };
-export const getOffers = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const getOffers = async (req: Request, res: Response): Promise<void> => {
   try {
     const sortField = (req.query.sort as string) || "createdAt";
     const sortOrder: SortOrder = req.query.order === "asc" ? 1 : -1;
@@ -99,7 +95,8 @@ export const getOffers = async (
       .sort(sortOption)
       .limit(limit)
       .skip(skip)
-      .populate("userId", "username avatar");
+      .populate({ path: "userId", select: "username avatar", model: "User" })
+      .lean();
 
     res.status(200).json({
       offers,
