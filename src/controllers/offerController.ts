@@ -156,3 +156,75 @@ export const getOfferById = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
+export const updateOffer = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const {
+      title,
+      description,
+      price,
+      city,
+      brand,
+      size,
+      color,
+      condition,
+      pictures,
+    } = req.body;
+
+    const updatedOffer = await Offer.findByIdAndUpdate(
+      id,
+      {
+        title,
+        description,
+        price,
+        city,
+        brand,
+        size,
+        color,
+        condition,
+        pictures,
+      },
+      { new: true }
+    );
+
+    if (!updatedOffer) {
+      res.status(404).json({ message: "Offre non trouvée." });
+    }
+
+    res
+      .status(200)
+      .json({ message: "Offre mise à jour avec succès.", offer: updatedOffer });
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour de l'offre:", error);
+    res.status(500).json({ message: "Erreur interne du serveur." });
+  }
+};
+export const deleteOffer = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const deletedOffer = await Offer.findByIdAndDelete(id);
+    if (!deletedOffer) {
+      res.status(404).json({ message: "Offre non trouvée." });
+    }
+
+    res.status(200).json({ message: "Offre supprimée avec succès." });
+  } catch (error) {
+    console.error("Erreur lors de la suppression de l'offre:", error);
+    res.status(500).json({ message: "Erreur interne du serveur." });
+  }
+};
+export const getUserOffers = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const offers = await Offer.find({ userId });
+
+    res.status(200).json(offers);
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des offres de l'utilisateur:",
+      error
+    );
+    res.status(500).json({ message: "Erreur interne du serveur." });
+  }
+};
