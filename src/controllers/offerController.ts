@@ -214,9 +214,10 @@ export const deleteOffer = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
-export const getUserOffers = async (req: Request, res: Response) => {
+export const getMyOffers = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    const { userId } = req.params; // Récupérer l'ID utilisateur depuis l'URL
+
     const offers = await Offer.find({ userId }).populate(
       "userId",
       "username avatar"
@@ -227,7 +228,8 @@ export const getUserOffers = async (req: Request, res: Response) => {
         .status(404)
         .json({ message: "Aucune offre trouvée pour cet utilisateur." });
     }
-    res.status(200).json(offers);
+
+    res.status(200).json({ offers });
   } catch (error) {
     console.error(
       "Erreur lors de la récupération des offres de l'utilisateur:",
