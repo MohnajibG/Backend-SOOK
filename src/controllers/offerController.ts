@@ -222,6 +222,11 @@ export const getUserOffers = async (req: Request, res: Response) => {
       "username avatar"
     );
 
+    if (!offers || offers.length === 0) {
+      res
+        .status(404)
+        .json({ message: "Aucune offre trouvée pour cet utilisateur." });
+    }
     res.status(200).json(offers);
   } catch (error) {
     console.error(
