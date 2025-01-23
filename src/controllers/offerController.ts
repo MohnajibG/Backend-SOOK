@@ -217,7 +217,10 @@ export const deleteOffer = async (req: Request, res: Response) => {
 export const getUserOffers = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    const offers = await Offer.find({ userId });
+    const offers = await Offer.find({ userId }).populate(
+      "userId",
+      "username avatar"
+    );
 
     res.status(200).json(offers);
   } catch (error) {
