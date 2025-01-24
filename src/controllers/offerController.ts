@@ -63,10 +63,7 @@ export const publishOffer = async (
 
     res.status(201).json({
       message: "Offre publiée avec succès.",
-      offer: {
-        ...populatedOffer?.toObject(),
-        username: populatedOffer?.userId.account.username,
-      },
+      offer: populatedOffer,
     });
   } catch (error) {
     console.log("Erreur lors de la publication de l'offre :", error);
