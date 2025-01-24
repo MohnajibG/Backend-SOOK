@@ -217,25 +217,22 @@ export const deleteOffer = async (req: Request, res: Response) => {
 };
 export const getMyOffers = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params; // Récupérer l'ID utilisateur depuis l'URL
+    // Vérifier que l'utilisateur est authentifié
+    if (!req.user) {
+      res.status(401).json({ message: "Utilisateur non authentifié." });
+      return;
+    }
 
-    const offers = await Offer.find({ userId }).populate(
+    // Récupérer les offres de l'utilisateur connecté
+    const offers = await Offer.find({ userId: (req.user as any)._id }).populate(
       "userId",
       "username avatar"
     );
 
-    if (!offers || offers.length === 0) {
-      res
-        .status(404)
-        .json({ message: "Aucune offre trouvée pour cet utilisateur." });
-    }
-
     res.status(200).json({ offers });
+    return;
   } catch (error) {
-    console.error(
-      "Erreur lors de la récupération des offres de l'utilisateur:",
-      error
-    );
+    console.error("Erreur lors de la récupération des offres:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
