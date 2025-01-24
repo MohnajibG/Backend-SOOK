@@ -92,7 +92,11 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
       .sort(sortOption)
       .limit(limit)
       .skip(skip)
-      .populate({ path: "userId", select: "username avatar", model: "User" })
+      .populate({
+        path: "userId",
+        select: "account.username account.avatar",
+        model: "User",
+      }) // ✅ Correction du `select`
       .lean();
 
     res.status(200).json({
