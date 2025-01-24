@@ -19,7 +19,7 @@ router.get("/offers/:id", getOfferById);
 
 router.post("/offers/publish", isAuthenticated, publishOffer);
 
-router.get("/myOffers/:userId", isAuthenticated, getMyOffers);
+router.get("/myOffers", isAuthenticated, getMyOffers);
 router.get("/:id", getOfferById);
 router.put("/update/:id", isAuthenticated, updateOffer);
 router.delete("/delete/:id", isAuthenticated, deleteOffer);
