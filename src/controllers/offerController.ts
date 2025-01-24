@@ -96,7 +96,7 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
         path: "userId",
         select: "account.username account.avatar",
         model: "User",
-      }) // ✅ Correction du `select`
+      }) // ✅
       .lean();
 
     res.status(200).json({
@@ -141,9 +141,12 @@ export const searchOffers = async (
 export const getOfferById = async (req: Request, res: Response) => {
   try {
     const offer = await Offer.findById(req.params.id)
-      .populate("userId", "username avatar")
-      .select("-__v");
-
+      .populate({
+        path: "userId",
+        select: "account.username account.avatar",
+        model: "User",
+      })
+      .lean();
     if (!offer) {
       res.status(404).json({ message: "Offre non trouvée." });
       return;
