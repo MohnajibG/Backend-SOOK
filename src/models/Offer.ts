@@ -1,13 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 interface Offer extends Document {
-  userId: {
-    _id: mongoose.Types.ObjectId;
-    account: {
-      username: string;
-      avatar?: string;
-    };
-  };
+  userId: mongoose.Types.ObjectId;
   title: string;
   description: string;
   price: number;
