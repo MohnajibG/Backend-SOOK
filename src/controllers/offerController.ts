@@ -220,7 +220,6 @@ export const getMyOffers = async (req: Request, res: Response) => {
     // Vérifier que l'utilisateur est authentifié
     if (!req.user) {
       res.status(401).json({ message: "Utilisateur non authentifié." });
-      return;
     }
 
     // Récupérer les offres de l'utilisateur connecté
