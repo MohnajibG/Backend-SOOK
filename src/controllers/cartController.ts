@@ -23,7 +23,6 @@ export const addCart: RequestHandler = async (
       res
         .status(400)
         .json({ message: "Tous les champs sont requis (id, name, price)." });
-      return;
     }
 
     const existingCartItem = await Cart.findOne({ id });
@@ -32,7 +31,6 @@ export const addCart: RequestHandler = async (
     if (existingCartItem) {
       // Si l'article existe déjà dans le panier, on empêche d'ajouter un doublon.
       res.status(400).json({ message: "Ce produit est déjà dans le panier." });
-      return;
     }
 
     const cartItem = new Cart({ id, name, price });
