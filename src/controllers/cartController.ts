@@ -1,10 +1,7 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
-// Importation des types nécessaires depuis Express pour typer les requêtes et les réponses.
 
 import Cart from "../models/Cart";
-// Importation du modèle Mongoose "Cart" qui représente la collection du panier dans la base de données.
 
-// Définition d'une interface pour typer les données du panier
 interface CartItem {
   id: string;
   name: string;
