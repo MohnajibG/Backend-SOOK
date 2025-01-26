@@ -1,82 +1,100 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
-import Cart from "../models/Cart";
+// Importation des types nécessaires depuis Express pour typer les requêtes et les réponses.
 
+import Cart from "../models/Cart";
+// Importation du modèle Mongoose "Cart" qui représente la collection du panier dans la base de données.
+
+// Définition d'une interface pour typer les données du panier
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+}
+
+// Ajout d'un article au panier
 export const addCart: RequestHandler = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id, name, price } = req.body;
+    const { id, name, price }: CartItem = req.body;
+    // Extraction et typage des données envoyées dans le corps de la requête.
 
-    if (!id || !name || !price) {
+    if (!id || !name || price === undefined) {
+      // Vérifie si toutes les données requises sont présentes.
       res
         .status(400)
         .json({ message: "Tous les champs sont requis (id, name, price)." });
+      return;
     }
 
     const existingCartItem = await Cart.findOne({ id });
+    // Recherche dans la base si un produit avec le même id est déjà dans le panier.
 
     if (existingCartItem) {
+      // Si l'article existe déjà dans le panier, on empêche d'ajouter un doublon.
       res.status(400).json({ message: "Ce produit est déjà dans le panier." });
+      return;
     }
 
     const cartItem = new Cart({ id, name, price });
+    // Création d'un nouvel objet Cart avec les informations reçues.
     await cartItem.save();
+    // Sauvegarde du nouvel article dans la base de données.
 
     res.status(201).json({ message: "Produit ajouté au panier", cartItem });
+    // Retourne une réponse 201 (Created) avec le produit ajouté.
   } catch (error) {
     next(error);
+    // Passe l'erreur au middleware de gestion des erreurs Express.
   }
 };
 
-export const getCart = async (req: Request, res: Response) => {
+// Récupération de tous les articles du panier
+export const getCart: RequestHandler = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
-    const cart = await Cart.find();
+    const cart: CartItem[] = await Cart.find();
+    // Recherche de tous les articles présents dans la base de données (panier).
+
     res.status(200).json(cart);
+    // Retourne une réponse 200 (OK) avec la liste des articles.
   } catch (error) {
     res.status(500).json({ message: (error as Error).message });
+    // En cas d'erreur serveur, retourne une réponse 500 avec le message d'erreur.
   }
 };
 
-export const deleteCart = async (req: Request, res: Response) => {
+// Suppression d'un article du panier
+export const deleteCart: RequestHandler = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const { id } = req.params;
+  // Récupération de l'id de l'article à supprimer depuis les paramètres de l'URL.
 
   try {
-    const result = await Cart.findByIdAndDelete(id);
+    const result = await Cart.findOneAndDelete({ id });
+    // Recherche et suppression de l'article correspondant dans la base de données.
 
     if (result) {
-      res.status(200).json({ message: "Article supprimé du panier" });
+      // Si l'article a bien été trouvé et supprimé :
+      const updatedCart: CartItem[] = await Cart.find();
+      // On récupère la liste mise à jour du panier après suppression.
+
+      res
+        .status(200)
+        .json({ message: "Article supprimé du panier", cart: updatedCart });
+      // Répond avec un message de succès et le panier mis à jour.
     } else {
       res.status(404).json({ error: "Article non trouvé dans le panier" });
+      // Si l'article n'est pas trouvé, retourne une erreur 404 (Not Found).
     }
   } catch (error) {
     res.status(500).json({ message: (error as Error).message });
-  }
-};
-
-export const updateCart = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { quantity } = req.body;
-
-  if (quantity <= 0) {
-    res.status(400).json({ error: "La quantité doit être supérieure à zéro." });
-  }
-
-  try {
-    const updatedItem = await Cart.findByIdAndUpdate(
-      id,
-      { quantity },
-      { new: true }
-    );
-
-    if (updatedItem) {
-      res.status(200).json({ message: "Quantité mise à jour", updatedItem });
-    } else {
-      res.status(404).json({ error: "Article non trouvé dans le panier" });
-    }
-  } catch (error) {
-    console.error("Erreur lors de la mise à jour de l'article :", error);
-    res.status(500).json({ error: "Erreur serveur lors de la mise à jour" });
+    // En cas d'erreur serveur, retourne une réponse 500 avec le message d'erreur.
   }
 };
