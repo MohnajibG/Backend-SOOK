@@ -37,18 +37,41 @@ export const signup = async (
     return;
   }
 
-  if (password.length < 8) {
-    res.status(400).json({
-      message: "Le mot de passe doit comporter au moins 8 caractères.",
-    });
-    return;
+  const passwordRegex = {
+    length: /.{8,}/,
+    uppercase: /[A-Z]/,
+    lowercase: /[a-z]/,
+    number: /\d/,
+    special: /[@$!%*?&]/,
+  };
+  let errors: string[] = [];
+
+  if (!passwordRegex.length.test(password)) {
+    errors.push("Le mot de passe doit contenir au moins 8 caractères.");
+  }
+  if (!passwordRegex.uppercase.test(password)) {
+    errors.push("Le mot de passe doit contenir au moins une majuscule.");
+  }
+  if (!passwordRegex.lowercase.test(password)) {
+    errors.push("Le mot de passe doit contenir au moins une minuscule.");
+  }
+  if (!passwordRegex.number.test(password)) {
+    errors.push("Le mot de passe doit contenir au moins un chiffre.");
+  }
+  if (!passwordRegex.special.test(password)) {
+    errors.push(
+      "Le mot de passe doit contenir au moins un caractère spécial (@$!%*?&)."
+    );
+  }
+
+  if (errors.length > 0) {
+    res.status(400).json({ errors });
   }
 
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       res.status(409).json({ message: "Email déjà utilisé." });
-      return;
     }
 
     // Génération des credentials
