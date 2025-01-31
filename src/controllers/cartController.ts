@@ -3,6 +3,7 @@ import { Request, Response, NextFunction, RequestHandler } from "express";
 import Cart from "../models/Cart";
 
 interface CartItem {
+  userId: string;
   id: string;
   name: string;
   price: number;
@@ -15,15 +16,16 @@ export const addCart: RequestHandler = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id, name, price }: CartItem = req.body;
+    const { userId, id, name, price }: CartItem = req.body;
     // Extraction et typage des données envoyées dans le corps de la requête.
 
-    if (!id || !name || price === undefined) {
+    if (!userId || !id || !name || price === undefined) {
       // Vérifie si toutes les données requises sont présentes.
-      res
-        .status(400)
-        .json({ message: "Tous les champs sont requis (id, name, price)." });
+      res.status(400).json({
+        message: "Tous les champs sont requis (userId, id, name, price).",
+      });
     }
+    // const userCart = await Cart.find({ userId }).populate("userId");
 
     const existingCartItem = await Cart.findOne({ id });
     // Recherche dans la base si un produit avec le même id est déjà dans le panier.
@@ -33,7 +35,7 @@ export const addCart: RequestHandler = async (
       res.status(400).json({ message: "Ce produit est déjà dans le panier." });
     }
 
-    const cartItem = new Cart({ id, name, price });
+    const cartItem = new Cart({ userId, id, name, price });
     // Création d'un nouvel objet Cart avec les informations reçues.
     await cartItem.save();
     // Sauvegarde du nouvel article dans la base de données.
