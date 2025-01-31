@@ -8,7 +8,6 @@ import {
   searchOffers,
   updateOffer,
 } from "../controllers/offerController";
-
 import isAuthenticated from "../middlewares/isAuthenticated";
 
 const router = express.Router();
@@ -18,10 +17,8 @@ router.get("/offers/search", searchOffers);
 router.get("/offers/:id", getOfferById);
 
 router.post("/offers/publish", isAuthenticated, publishOffer);
-
 router.get("/offers/user", isAuthenticated, getMyOffers);
-router.get("/:id", getOfferById);
-router.put("/update/:id", isAuthenticated, updateOffer);
-router.delete("/delete/:id", isAuthenticated, deleteOffer);
+router.put("/offers/update/:id", isAuthenticated, updateOffer);
+router.delete("/offers/delete/:id", isAuthenticated, deleteOffer);
 
 export default router;

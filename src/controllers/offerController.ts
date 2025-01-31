@@ -7,7 +7,13 @@ export const publishOffer = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
+  const userId = (req.user as any)._id;
+  const username = (req.user as any).username;
   try {
+    if (!req.user) {
+      res.status(401).json({ message: "Utilisateur non authentifié." });
+    }
+
     const {
       title,
       description,
@@ -17,8 +23,6 @@ export const publishOffer = async (
       size,
       color,
       condition,
-      userId,
-      username,
       pictures,
     } = req.body;
 
@@ -35,15 +39,19 @@ export const publishOffer = async (
       return;
     }
 
-    // Vérification des URLs des images
-    if (!pictures || (Array.isArray(pictures) && pictures.length === 0)) {
+    if (!pictures || !Array.isArray(pictures) || pictures.length === 0) {
       res.status(400).json({ message: "Veuillez ajouter au moins une image." });
       return;
     }
 
+    if (!req.user) {
+      res.status(401).json({ message: "Utilisateur non authentifié." });
+      return;
+    }
+
     const newOffer = new Offer({
-      userId,
-      username,
+      userId: (req.user as any)._id,
+      username: (req.user as any).username,
       title,
       description,
       price,
@@ -56,20 +64,21 @@ export const publishOffer = async (
     });
 
     await newOffer.save();
+
     const populatedOffer = await Offer.findById(newOffer._id).populate({
       path: "userId",
-      select: "account.username",
+      select: "username avatar",
     });
 
-    res.status(201).json({
-      message: "Offre publiée avec succès.",
-      offer: populatedOffer,
-    });
+    res
+      .status(201)
+      .json({ message: "Offre publiée avec succès.", offer: populatedOffer });
   } catch (error) {
-    console.log("Erreur lors de la publication de l'offre :", error);
+    console.error("Erreur lors de la publication de l'offre :", error);
     next(error);
   }
 };
+
 export const getOffers = async (req: Request, res: Response): Promise<void> => {
   try {
     const sortField = (req.query.sort as string) || "createdAt";
@@ -220,16 +229,18 @@ export const getMyOffers = async (req: Request, res: Response) => {
     // Vérifier que l'utilisateur est authentifié
     if (!req.user) {
       res.status(401).json({ message: "Utilisateur non authentifié." });
+      return;
     }
 
+    const userId = (req.user as any)._id;
+
     // Récupérer les offres de l'utilisateur connecté
-    const offers = await Offer.find({ userId: (req.user as any)._id }).populate(
+    const offers = await Offer.find({ userId }).populate(
       "userId",
       "username avatar"
     );
 
     res.status(200).json({ offers });
-    return;
   } catch (error) {
     console.error("Erreur lors de la récupération des offres:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });

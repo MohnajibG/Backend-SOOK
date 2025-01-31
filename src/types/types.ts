@@ -55,3 +55,12 @@ export interface CartPropos extends Request {
   user?: User;
   body: Record<string, any>; // Permet de gérer différents types de corps de requête
 }
+export interface UserDocument extends Document {
+  _id: string;
+  username: string;
+  avatar?: string;
+}
+
+export interface AuthenticatedRequest extends Request {
+  user?: UserDocument;
+}
