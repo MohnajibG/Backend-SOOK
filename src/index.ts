@@ -27,7 +27,7 @@ app.use(fileUpload({ useTempFiles: true }));
 app.use(passport.initialize());
 
 app.use("/user", userRoutes);
-app.use("/profile", profileRoutes);
+app.use("/user", profileRoutes);
 app.use("/cart", cartRoutes);
 // app.use("/auth", googleAuthRoutes);
 
