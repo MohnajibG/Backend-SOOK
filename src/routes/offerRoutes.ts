@@ -3,7 +3,7 @@ import {
   deleteOffer,
   getOfferById,
   getOffers,
-  getMyOffers,
+  getMyOffer,
   publishOffer,
   searchOffers,
   updateOffer,
@@ -17,7 +17,7 @@ router.get("/offers/search", searchOffers);
 router.get("/offers/:id", getOfferById);
 
 router.post("/offers/publish", isAuthenticated, publishOffer);
-router.get("/offers/user", isAuthenticated, getMyOffers);
+router.get("/offers/user", isAuthenticated, getMyOffer);
 router.put("/offers/update/:id", isAuthenticated, updateOffer);
 router.delete("/offers/delete/:id", isAuthenticated, deleteOffer);
 

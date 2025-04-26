@@ -224,11 +224,13 @@ export const deleteOffer = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
-export const getMyOffers = async (req: Request, res: Response) => {
+export const getMyOffer = async (req: Request, res: Response) => {
   try {
     if (!req.user) {
-      return res.status(401).json({ message: "Utilisateur non authentifié." });
+      res.status(401).json({ message: "Utilisateur non authentifié." });
+      return;
     }
+    console.log("DEBUG req.user:", req.user);
 
     const userId = (req.user as any)._id;
 
@@ -237,6 +239,7 @@ export const getMyOffers = async (req: Request, res: Response) => {
       select: "account.username account.avatar",
       model: "User",
     });
+    console.log("DEBUG Authorization Header:", req.headers.authorization);
 
     res.status(200).json({ offers });
   } catch (error) {
