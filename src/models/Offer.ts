@@ -58,7 +58,6 @@ const OfferSchema: Schema = new Schema(
         },
         message: "Toutes les images doivent être des URLs valides.",
       },
-      createdAt: { type: Date, default: Date.now },
     },
   },
   { timestamps: true }

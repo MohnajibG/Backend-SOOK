@@ -226,19 +226,17 @@ export const deleteOffer = async (req: Request, res: Response) => {
 };
 export const getMyOffers = async (req: Request, res: Response) => {
   try {
-    // Vérifier que l'utilisateur est authentifié
     if (!req.user) {
-      res.status(401).json({ message: "Utilisateur non authentifié." });
-      return;
+      return res.status(401).json({ message: "Utilisateur non authentifié." });
     }
 
     const userId = (req.user as any)._id;
 
-    // Récupérer les offres de l'utilisateur connecté
-    const offers = await Offer.find({ userId }).populate(
-      "userId",
-      "username avatar"
-    );
+    const offers = await Offer.find({ userId }).populate({
+      path: "userId",
+      select: "account.username account.avatar",
+      model: "User",
+    });
 
     res.status(200).json({ offers });
   } catch (error) {
