@@ -224,26 +224,81 @@ export const deleteOffer = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
-export const getMyOffer = async (req: Request, res: Response) => {
+export const getOfferByUserId = async (req: Request, res: Response) => {
   try {
-    if (!req.user) {
-      res.status(401).json({ message: "Utilisateur non authentifié." });
+    const userId = req.params.userId;
+
+    const offers = await Offer.find({ userId }).populate(
+      "userId",
+      "account.username account.avatar"
+    );
+
+    if (!offers) {
+      res.status(404).json({ message: "Aucune offre trouvée." });
       return;
     }
-    console.log("DEBUG req.user:", req.user);
-
-    const userId = (req.user as any)._id;
-
-    const offers = await Offer.find({ userId }).populate({
-      path: "userId",
-      select: "account.username account.avatar",
-      model: "User",
-    });
-    console.log("DEBUG Authorization Header:", req.headers.authorization);
 
     res.status(200).json({ offers });
   } catch (error) {
     console.error("Erreur lors de la récupération des offres:", error);
+    res.status(500).json({ message: "Erreur interne du serveur." });
+  }
+};
+export const getMyOfferById = async (req: Request, res: Response) => {
+  try {
+    const userId = (req.user as any)._id;
+    const offerId = req.params.id;
+    const offer = await Offer.findOne({ _id: offerId, userId }).populate(
+      "userId",
+      "account.username account.avatar"
+    );
+    if (!offer) {
+      res.status(404).json({ message: "Offre non trouvée." });
+      return;
+    }
+    res.status(200).json({ offer });
+  } catch (error) {
+    console.error("Erreur lors de la récupération de l'offre:", error);
+    res.status(500).json({ message: "Erreur interne du serveur." });
+  }
+};
+export const deleteMyOffer = async (req: Request, res: Response) => {
+  try {
+    const userId = (req.user as any)._id;
+    const offerId = req.params.id;
+    const offer = await Offer.findOneAndDelete({ _id: offerId, userId });
+    if (!offer) {
+      res.status(404).json({ message: "Offre non trouvée." });
+      return;
+    }
+    res.status(200).json({ message: "Offre supprimée avec succès." });
+  } catch (error) {
+    console.error("Erreur lors de la suppression de l'offre:", error);
+    res.status(500).json({ message: "Erreur interne du serveur." });
+  }
+};
+
+export const getMyOffers = async (req: Request, res: Response) => {
+  console.log("🛠 DEBUG - Requête GET /offers/user reçue");
+  console.log("🔎 Headers Authorization:", req.headers.authorization);
+  console.log("🔎 req.user:", req.user);
+
+  try {
+    if (!req.user || !(req.user as any)._id) {
+      console.log("❌ req.user ou req.user._id manquant !");
+      res.status(401).json({ message: "Non autorisé" });
+    }
+
+    const userId = (req.user as any)._id;
+
+    const offers = await Offer.find({ userId }).populate(
+      "userId",
+      "account.username account.avatar"
+    );
+
+    res.status(200).json({ offers });
+  } catch (error) {
+    console.error("🔥 Erreur dans getMyOffers:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
