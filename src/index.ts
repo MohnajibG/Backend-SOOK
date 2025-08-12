@@ -28,7 +28,7 @@ app.use(passport.initialize());
 
 app.use("/user", userRoutes);
 app.use("/user", profileRoutes);
-app.use("/cart", cartRoutes);
+app.use("/", cartRoutes);
 // app.use("/auth", googleAuthRoutes);
 
 app.use(offerRoutes);
