@@ -1,7 +1,11 @@
 import { Request } from "express";
 import "express-fileupload";
 import { FileArray } from "express-fileupload";
+import { Document } from "mongoose";
 
+// ==============================
+// Signup / Auth Types
+// ==============================
 export interface SignupRequestBody {
   username: string;
   email: string;
@@ -10,16 +14,22 @@ export interface SignupRequestBody {
   address?: string;
   phoneNumber?: string;
   newsletter?: boolean;
-  avatar?: any; // Facultatif : peut être un fichier ou une chaîne
+  avatar?: any; // Peut être un fichier ou une chaîne
   country?: string;
   sexe?: "Homme" | "Femme" | "Autre";
   dateOfBorn?: string;
 }
 
-export interface UpdateprofileUpdateParams {
-  userId: string; // Ici, on spécifie que userId est un string dans les paramètres de la route
+// ==============================
+// Update Profile Params
+// ==============================
+export interface UpdateProfileParams {
+  userId: string;
 }
 
+// ==============================
+// Express-FileUpload Typing
+// ==============================
 declare module "express-fileupload" {
   interface UploadedFile {
     name: string;
@@ -37,12 +47,16 @@ declare module "express-fileupload" {
   }
 }
 
+// Étendre Express.Request pour inclure `files`
 declare module "express-serve-static-core" {
   interface Request {
     files?: FileArray;
   }
 }
 
+// ==============================
+// User Types
+// ==============================
 export interface User {
   _id: string;
   name?: string;
@@ -50,17 +64,24 @@ export interface User {
   token?: string;
 }
 
-export interface CartPropos extends Request {
-  params: { [key: string]: string }; // Permet d'accepter différents paramètres (id, userId...)
-  user?: User;
-  body: Record<string, any>; // Permet de gérer différents types de corps de requête
-}
 export interface UserDocument extends Document {
   _id: string;
   username: string;
   avatar?: string;
 }
 
+// ==============================
+// Cart Request Type
+// ==============================
+export interface CartRequest extends Request {
+  params: { [key: string]: string }; // Peut contenir userId, id, productId, etc.
+  user?: User;
+  body: Record<string, any>;
+}
+
+// ==============================
+// Authenticated Request
+// ==============================
 export interface AuthenticatedRequest extends Request {
   user?: UserDocument;
 }

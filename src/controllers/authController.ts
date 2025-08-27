@@ -7,6 +7,9 @@ import User from "../models/User";
 import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 import { SignupRequestBody } from "../types/types";
 
+// ==============================
+// Signup
+// ==============================
 export const signup = async (
   req: Request<{}, {}, SignupRequestBody>,
   res: Response
@@ -18,7 +21,7 @@ export const signup = async (
 
   const { username, email, password, confirmPassword } = req.body;
 
-  // Validation des champs
+  // Validation basique
   if (!username || !email || !password || !confirmPassword) {
     res.status(400).json({ message: "Tous les champs sont requis." });
     return;
@@ -37,6 +40,7 @@ export const signup = async (
     return;
   }
 
+  // Validation mot de passe
   const passwordRegex = {
     length: /.{8,}/,
     uppercase: /[A-Z]/,
@@ -44,52 +48,47 @@ export const signup = async (
     number: /\d/,
     special: /[@$!%*?&]/,
   };
-  let errors: string[] = [];
-
-  if (!passwordRegex.length.test(password)) {
+  const errors: string[] = [];
+  if (!passwordRegex.length.test(password))
     errors.push("Le mot de passe doit contenir au moins 8 caractères.");
-  }
-  if (!passwordRegex.uppercase.test(password)) {
+  if (!passwordRegex.uppercase.test(password))
     errors.push("Le mot de passe doit contenir au moins une majuscule.");
-  }
-  if (!passwordRegex.lowercase.test(password)) {
+  if (!passwordRegex.lowercase.test(password))
     errors.push("Le mot de passe doit contenir au moins une minuscule.");
-  }
-  if (!passwordRegex.number.test(password)) {
+  if (!passwordRegex.number.test(password))
     errors.push("Le mot de passe doit contenir au moins un chiffre.");
-  }
-  if (!passwordRegex.special.test(password)) {
+  if (!passwordRegex.special.test(password))
     errors.push(
       "Le mot de passe doit contenir au moins un caractère spécial (@$!%*?&)."
     );
-  }
 
   if (errors.length > 0) {
     res.status(400).json({ errors });
+    return;
   }
 
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       res.status(409).json({ message: "Email déjà utilisé." });
+      return;
     }
 
     // Génération des credentials
     const salt = uid2(64);
-    const hash = SHA256(password + salt).toString(); // Calcul du hash
+    const hash = SHA256(password + salt).toString();
     const token = uid2(64);
 
-    // Création de l'utilisateur
     const newUser = new User({
       email,
       account: { username },
-      hash, // Utilisez uniquement `hash` ici
+      hash,
       salt,
       token,
     });
     await newUser.save();
 
-    // Préparation et envoi de l'e-mail de bienvenue
+    // Envoi email bienvenue
     const message = `Bonjour ${username}, bienvenue dans SOOK!`;
     const recipients = [new Recipient(email, username)];
     const emailParams = new EmailParams()
@@ -100,12 +99,15 @@ export const signup = async (
       .setText(message);
 
     try {
-      const emailResult = await mailerSend.email.send(emailParams);
-      console.log("Email envoyé avec succès :", emailResult);
+      await mailerSend.email.send(emailParams);
     } catch (emailError) {
-      console.log("Erreur d'envoi d'e-mail:", emailError);
-      res.status(500).json({
-        message: "Erreur interne du serveur lors de l'envoi de l'e-mail.",
+      console.error("Erreur envoi mail:", emailError);
+      // On continue quand même l’inscription, mais on prévient le client
+      res.status(201).json({
+        message: "Inscription réussie (⚠️ mais email non envoyé).",
+        userId: newUser._id,
+        token: newUser.token,
+        account: { username: newUser.account.username },
       });
       return;
     }
@@ -117,20 +119,22 @@ export const signup = async (
       account: { username: newUser.account.username },
     });
   } catch (error) {
-    console.log(error);
+    console.error("Erreur signup:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
 
-// Fonction pour se connecter
+// ==============================
+// Login
+// ==============================
 export const login = async (
-  req: Request<{}, {}, SignupRequestBody>,
+  req: Request<{}, {}, { email: string; password: string }>,
   res: Response
 ): Promise<void> => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    res.status(400).json({ message: "Email et mot de passe sont requis." });
+    res.status(400).json({ message: "Email et mot de passe requis." });
     return;
   }
 
@@ -141,15 +145,12 @@ export const login = async (
       return;
     }
 
-    // Vérification du mot de passe
     const hashedPassword = SHA256(password + user.salt).toString();
     if (hashedPassword !== user.hash) {
-      // Utilisation de `hash` pour comparaison
       res.status(401).json({ message: "Mot de passe incorrect." });
       return;
     }
 
-    // Génération d'un nouveau token
     const token = uid2(32);
     user.token = token;
     await user.save();
@@ -161,26 +162,35 @@ export const login = async (
       account: { username: user.account.username, avatar: user.account.avatar },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Erreur login:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
 
+// ==============================
+// Vérification Google OAuth
+// ==============================
 const client = new OAuth2Client("sook-443123.apps.googleusercontent.com");
 
-async function verifyToken(req: Request, res: Response) {
+export const verifyToken = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const { token } = req.body;
+  if (!token) {
+    res.status(400).json({ message: "Token manquant." });
+    return;
+  }
+
   try {
     const ticket = await client.verifyIdToken({
       idToken: token,
-      audience: "sook-443123.apps.googleusercontent.com", // Spécifie ton client ID ici
+      audience: "sook-443123.apps.googleusercontent.com",
     });
     const payload = ticket.getPayload();
-    // Si l'utilisateur est authentifié, tu peux le traiter ici
-    res.json({ user: payload });
+    res.status(200).json({ user: payload });
   } catch (error) {
-    res.status(401).send("Invalid token");
+    console.error("Erreur verifyToken:", error);
+    res.status(401).json({ message: "Token invalide." });
   }
-}
-
-export { verifyToken };
+};

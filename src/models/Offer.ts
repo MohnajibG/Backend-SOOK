@@ -1,17 +1,18 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-interface Offer extends Document {
+export interface OfferDocument extends Document {
   userId: mongoose.Types.ObjectId;
   title: string;
   description: string;
   price: number;
-  condition: string;
+  condition: "Neuf" | "Très bon état" | "Bon état" | "Usé";
   city: string;
   brand: string;
-  size: string;
+  size?: string;
   color: string;
   pictures: string[];
   createdAt: Date;
+  updatedAt: Date;
 }
 
 const OfferSchema: Schema = new Schema(
@@ -21,21 +22,24 @@ const OfferSchema: Schema = new Schema(
       ref: "User",
       required: true,
     },
-    title: { type: String, required: true },
-    description: { type: String, required: true },
+    title: { type: String, required: true, trim: true },
+    description: { type: String, required: true, trim: true },
     price: {
       type: Number,
       required: true,
       min: [0, "Le prix doit être positif."],
       validate: {
-        validator: function (value: number) {
-          return /^\d+(\.\d{1,2})?$/.test(value.toString());
-        },
+        validator: (value: number) =>
+          /^\d+(\.\d{1,2})?$/.test(value.toString()),
         message:
-          "Le prix doit être un nombre avec au maximum deux chiffres après la virgule.",
+          "Le prix doit avoir au maximum deux chiffres après la virgule.",
       },
     },
-    condition: { type: String, required: true },
+    condition: {
+      type: String,
+      enum: ["Neuf", "Très bon état", "Bon état", "Usé"],
+      required: true,
+    },
     city: {
       type: String,
       required: true,
@@ -45,17 +49,14 @@ const OfferSchema: Schema = new Schema(
       ],
     },
     brand: { type: String, required: true },
-    size: { type: String, required: true },
+    size: { type: String, required: false }, // 👈 optionnel
     color: { type: String, required: true },
     pictures: {
       type: [String],
       required: true,
       validate: {
-        validator: function (value: string[]) {
-          return value.every((url) =>
-            /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/.test(url)
-          );
-        },
+        validator: (value: string[]) =>
+          value.every((url) => /^https?:\/\//.test(url)),
         message: "Toutes les images doivent être des URLs valides.",
       },
     },
@@ -63,6 +64,6 @@ const OfferSchema: Schema = new Schema(
   { timestamps: true }
 );
 
-const OfferModel = mongoose.model<Offer>("Offer", OfferSchema);
+const OfferModel = mongoose.model<OfferDocument>("Offer", OfferSchema);
 
 export default OfferModel;

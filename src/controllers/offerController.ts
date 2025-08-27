@@ -2,16 +2,18 @@ import { Request, Response, NextFunction } from "express";
 import Offer from "../models/Offer";
 import { SortOrder } from "mongoose";
 
+// ==============================
+// Publish Offer
+// ==============================
 export const publishOffer = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const userId = (req.user as any)._id;
-  const username = (req.user as any).username;
   try {
     if (!req.user) {
       res.status(401).json({ message: "Utilisateur non authentifié." });
+      return;
     }
 
     const {
@@ -34,7 +36,8 @@ export const publishOffer = async (
       return;
     }
 
-    if (isNaN(price) || price <= 0) {
+    const parsedPrice = Number(price);
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
       res.status(400).json({ message: "Le prix doit être un nombre positif." });
       return;
     }
@@ -44,17 +47,12 @@ export const publishOffer = async (
       return;
     }
 
-    if (!req.user) {
-      res.status(401).json({ message: "Utilisateur non authentifié." });
-      return;
-    }
-
     const newOffer = new Offer({
       userId: (req.user as any)._id,
       username: (req.user as any).username,
       title,
       description,
-      price,
+      price: parsedPrice,
       city,
       brand,
       size: size || null,
@@ -67,7 +65,7 @@ export const publishOffer = async (
 
     const populatedOffer = await Offer.findById(newOffer._id).populate({
       path: "userId",
-      select: "username avatar",
+      select: "account.username account.avatar",
     });
 
     res
@@ -79,94 +77,13 @@ export const publishOffer = async (
   }
 };
 
-export const getOffers = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const sortField = (req.query.sort as string) || "createdAt";
-    const sortOrder: SortOrder = req.query.order === "asc" ? 1 : -1;
-    const limit = Number(req.query.limit) || 10;
-    const page = Number(req.query.page) || 1;
-    const skip = (page - 1) * limit;
-
-    if (isNaN(limit) || limit <= 0 || isNaN(page) || page <= 0) {
-      res.status(400).json({
-        message:
-          "Les paramètres 'limit' et 'page' doivent être des nombres positifs.",
-      });
-      return;
-    }
-
-    const sortOption: Record<string, SortOrder> = { [sortField]: sortOrder };
-    const totalOffers = await Offer.countDocuments();
-    const offers = await Offer.find()
-      .sort(sortOption)
-      .limit(limit)
-      .skip(skip)
-      .populate({
-        path: "userId",
-        select: "account.username account.avatar",
-        model: "User",
-      }) // ✅
-      .lean();
-
-    res.status(200).json({
-      offers,
-      totalOffers,
-      totalPages: Math.ceil(totalOffers / limit),
-      currentPage: page,
-    });
-  } catch (error) {
-    console.error("Erreur lors de la récupération des offres:", error);
-    res.status(500).json({ message: "Erreur interne du serveur." });
-  }
-};
-
-export const searchOffers = async (
+// ==============================
+// Update Offer
+// ==============================
+export const updateOffer = async (
   req: Request,
-  res: Response,
-  next: NextFunction
+  res: Response
 ): Promise<void> => {
-  const { keyword } = req.query;
-
-  if (!keyword || typeof keyword !== "string") {
-    res
-      .status(400)
-      .json({ message: "Un mot-clé est requis pour la recherche." });
-    return;
-  }
-
-  try {
-    const regex = new RegExp(keyword, "i");
-    const offers = await Offer.find({
-      $or: [{ title: regex }, { description: regex }, { brand: regex }],
-    });
-
-    res.status(200).json({ offers });
-  } catch (error) {
-    console.error("Erreur lors de la recherche des offres:", error);
-    res.status(500).json({ message: "Erreur interne du serveur." });
-  }
-};
-
-export const getOfferById = async (req: Request, res: Response) => {
-  try {
-    const offer = await Offer.findById(req.params.id)
-      .populate({
-        path: "userId",
-        select: "account.username account.avatar",
-        model: "User",
-      })
-      .lean();
-    if (!offer) {
-      res.status(404).json({ message: "Offre non trouvée." });
-      return;
-    }
-
-    res.status(200).json({ offer });
-  } catch (error) {
-    res.status(500).json({ message: "Erreur interne du serveur." });
-  }
-};
-export const updateOffer = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const {
@@ -199,6 +116,7 @@ export const updateOffer = async (req: Request, res: Response) => {
 
     if (!updatedOffer) {
       res.status(404).json({ message: "Offre non trouvée." });
+      return;
     }
 
     res
@@ -209,13 +127,21 @@ export const updateOffer = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
-export const deleteOffer = async (req: Request, res: Response) => {
+
+// ==============================
+// Delete Offer
+// ==============================
+export const deleteOffer = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { id } = req.params;
-
     const deletedOffer = await Offer.findByIdAndDelete(id);
+
     if (!deletedOffer) {
       res.status(404).json({ message: "Offre non trouvée." });
+      return;
     }
 
     res.status(200).json({ message: "Offre supprimée avec succès." });
@@ -224,73 +150,107 @@ export const deleteOffer = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
-export const getOfferByUserId = async (req: Request, res: Response) => {
+
+// ==============================
+// Get All Offers (avec pagination & tri)
+// ==============================
+export const getOffers = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.params.userId;
+    const sortField = (req.query.sort as string) || "createdAt";
+    const sortOrder: SortOrder = req.query.order === "asc" ? 1 : -1;
+    const limit = Number(req.query.limit) || 10;
+    const page = Number(req.query.page) || 1;
+    const skip = (page - 1) * limit;
 
-    const offers = await Offer.find({ userId }).populate(
-      "userId",
-      "account.username account.avatar"
-    );
+    const totalOffers = await Offer.countDocuments();
+    const offers = await Offer.find()
+      .sort({ [sortField]: sortOrder })
+      .limit(limit)
+      .skip(skip)
+      .populate("userId", "account.username account.avatar")
+      .lean();
 
-    if (!offers) {
-      res.status(404).json({ message: "Aucune offre trouvée." });
-      return;
-    }
-
-    res.status(200).json({ offers });
+    res.status(200).json({
+      offers,
+      totalOffers,
+      totalPages: Math.ceil(totalOffers / limit),
+      currentPage: page,
+    });
   } catch (error) {
     console.error("Erreur lors de la récupération des offres:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
-export const getMyOfferById = async (req: Request, res: Response) => {
+
+// ==============================
+// Search Offers
+// ==============================
+export const searchOffers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const { keyword } = req.query;
+
+  if (!keyword || typeof keyword !== "string") {
+    res
+      .status(400)
+      .json({ message: "Un mot-clé est requis pour la recherche." });
+    return;
+  }
+
   try {
-    const userId = (req.user as any)._id;
-    const offerId = req.params.id;
-    const offer = await Offer.findOne({ _id: offerId, userId }).populate(
+    const regex = new RegExp(keyword, "i");
+    const offers = await Offer.find({
+      $or: [{ title: regex }, { description: regex }, { brand: regex }],
+    }).populate("userId", "account.username account.avatar");
+
+    res.status(200).json({ offers });
+  } catch (error) {
+    console.error("Erreur lors de la recherche des offres:", error);
+    res.status(500).json({ message: "Erreur interne du serveur." });
+  }
+};
+
+// ==============================
+// Get Offer By ID
+// ==============================
+export const getOfferById = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const offer = await Offer.findById(req.params.id).populate(
       "userId",
       "account.username account.avatar"
     );
+
     if (!offer) {
       res.status(404).json({ message: "Offre non trouvée." });
       return;
     }
+
     res.status(200).json({ offer });
   } catch (error) {
     console.error("Erreur lors de la récupération de l'offre:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
-export const deleteMyOffer = async (req: Request, res: Response) => {
-  try {
-    const userId = (req.user as any)._id;
-    const offerId = req.params.id;
-    const offer = await Offer.findOneAndDelete({ _id: offerId, userId });
-    if (!offer) {
-      res.status(404).json({ message: "Offre non trouvée." });
-      return;
-    }
-    res.status(200).json({ message: "Offre supprimée avec succès." });
-  } catch (error) {
-    console.error("Erreur lors de la suppression de l'offre:", error);
-    res.status(500).json({ message: "Erreur interne du serveur." });
-  }
-};
 
-export const getMyOffers = async (req: Request, res: Response) => {
-  console.log("🛠 DEBUG - Requête GET /offers/user reçue");
-  console.log("🔎 Headers Authorization:", req.headers.authorization);
-  console.log("🔎 req.user:", req.user);
-
+// ==============================
+// Get My Offers (user authentifié)
+// ==============================
+export const getMyOffers = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     if (!req.user || !(req.user as any)._id) {
-      console.log("❌ req.user ou req.user._id manquant !");
       res.status(401).json({ message: "Non autorisé" });
+      return;
     }
 
     const userId = (req.user as any)._id;
-
     const offers = await Offer.find({ userId }).populate(
       "userId",
       "account.username account.avatar"
