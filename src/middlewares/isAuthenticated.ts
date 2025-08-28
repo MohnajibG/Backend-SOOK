@@ -7,37 +7,60 @@ const isAuthenticated = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      res
-        .status(401)
-        .json({ message: "Unauthorized: missing or invalid token" });
+    // Vérifiez si le header Authorization est présent
+    const authorizationHeader = (req.headers as { authorization?: string })
+      .authorization;
+    if (!authorizationHeader) {
+      console.warn("⚠️ Aucun header Authorization reçu");
+      res.status(401).json({ message: "Unauthorized 🤟🏻" });
       return;
     }
 
-    const token = authHeader.split(" ")[1].trim();
+    // Extraire et nettoyer le token
+    const token = authorizationHeader.replace("Bearer ", "").trim();
     if (!token) {
-      res.status(401).json({ message: "Unauthorized: empty token" });
+      console.warn("⚠️ Token vide ou invalide");
+      res.status(401).json({ message: "Unauthorized 🤟🏻" });
       return;
     }
 
-    const user = await User.findOne({ token }).lean().exec();
+    console.log("🔑 Token reçu :", token);
+
+    // Cherchez l'utilisateur correspondant au token dans la base de données
+    const user = (await User.findOne({ token }).lean().exec()) as {
+      _id: any;
+      name?: string;
+      email?: string;
+      account?: { username?: string };
+    } | null;
+
     if (!user) {
-      res.status(401).json({ message: "Unauthorized: user not found" });
+      console.warn("❌ Aucun utilisateur trouvé avec ce token");
+      res.status(401).json({ message: "Unauthorized 🙀" });
       return;
     }
 
-    // Injection correcte avec account.username
-    req.user = {
-      _id: user._id.toString(),
+    console.log("✅ Utilisateur trouvé :", {
+      _id: user._id,
       email: user.email,
-      name: user.account?.username, // ✅ corrigé
+      username: user.account?.username,
+    });
+
+    // Ajouter l'utilisateur au `req` pour une utilisation ultérieure
+    req.user = {
+      _id: user._id.toString(), // 🔎 converti en string
+      name: user.account?.username || user.name,
+      email: user.email,
     };
 
+    console.log("📌 req.user injecté :", req.user);
+
+    // Passer au middleware ou contrôleur suivant
     return next();
   } catch (error) {
-    console.error("❌ Erreur dans isAuthenticated:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("🔥 Erreur dans isAuthenticated:", error);
+    res.status(500).json({ error: (error as Error).message });
+    return;
   }
 };
 
