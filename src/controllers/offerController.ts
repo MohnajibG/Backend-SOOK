@@ -252,7 +252,9 @@ export const getMyOffers = async (
       return;
     }
 
-    const userId = req.user._id;
+    // 🔑 conversion en ObjectId
+    const userId = new mongoose.Types.ObjectId(req.user._id);
+
     const offers = await Offer.find({ userId }).populate(
       "userId",
       "account.username account.avatar"
