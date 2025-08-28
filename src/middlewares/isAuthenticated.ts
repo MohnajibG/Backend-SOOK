@@ -8,34 +8,36 @@ const isAuthenticated = async (
 ): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      res.status(401).json({ message: "Unauthorized: missing token" });
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      res
+        .status(401)
+        .json({ message: "Unauthorized: missing or invalid token" });
       return;
     }
 
-    const token = authHeader.replace("Bearer ", "").trim();
+    const token = authHeader.split(" ")[1].trim();
     if (!token) {
-      res.status(401).json({ message: "Unauthorized: invalid token" });
+      res.status(401).json({ message: "Unauthorized: empty token" });
       return;
     }
 
-    const user = await User.findOne({ token }).lean();
+    const user = await User.findOne({ token }).lean().exec();
     if (!user) {
       res.status(401).json({ message: "Unauthorized: user not found" });
       return;
     }
 
-    // Injection typée de l'utilisateur
+    // Injection correcte avec account.username
     req.user = {
       _id: user._id.toString(),
       email: user.email,
-      name: user.account?.username || undefined,
+      name: user.account?.username, // ✅ corrigé
     };
 
-    next();
+    return next();
   } catch (error) {
-    console.error("Erreur dans isAuthenticated:", error);
-    res.status(500).json({ message: "Erreur interne du serveur" });
+    console.error("❌ Erreur dans isAuthenticated:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
