@@ -47,7 +47,6 @@ declare module "express-fileupload" {
   }
 }
 
-// Étendre Express.Request pour inclure `files`
 declare module "express-serve-static-core" {
   interface Request {
     files?: FileArray;
@@ -57,25 +56,34 @@ declare module "express-serve-static-core" {
 // ==============================
 // User Types
 // ==============================
-export interface User {
+export interface UserPayload {
   _id: string;
-  name?: string;
   email?: string;
-  token?: string;
+  account?: {
+    username?: string;
+    avatar?: string | null;
+  };
 }
 
+// Pour Mongoose Document
 export interface UserDocument extends Document {
   _id: string;
-  username: string;
-  avatar?: string;
+  email: string;
+  account: {
+    username: string;
+    avatar?: string | null;
+  };
+  token: string;
+  hash: string;
+  salt: string;
 }
 
 // ==============================
 // Cart Request Type
 // ==============================
 export interface CartRequest extends Request {
-  params: { [key: string]: string }; // Peut contenir userId, id, productId, etc.
-  user?: User;
+  params: { [key: string]: string };
+  user?: UserPayload;
   body: Record<string, any>;
 }
 
@@ -83,5 +91,19 @@ export interface CartRequest extends Request {
 // Authenticated Request
 // ==============================
 export interface AuthenticatedRequest extends Request {
-  user?: UserDocument;
+  user?: UserPayload;
+}
+
+export interface AuthUser {
+  _id: string;
+  email?: string;
+  name?: string;
+}
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: AuthUser;
+    }
+  }
 }

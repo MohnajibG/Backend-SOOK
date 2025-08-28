@@ -11,7 +11,7 @@ export const publishOffer = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    if (!req.user) {
+    if (!req.user?._id) {
       res.status(401).json({ message: "Utilisateur non authentifié." });
       return;
     }
@@ -48,8 +48,7 @@ export const publishOffer = async (
     }
 
     const newOffer = new Offer({
-      userId: (req.user as any)._id,
-      username: (req.user as any).username,
+      userId: req.user._id,
       title,
       description,
       price: parsedPrice,
@@ -152,7 +151,7 @@ export const deleteOffer = async (
 };
 
 // ==============================
-// Get All Offers (avec pagination & tri)
+// Get All Offers (pagination & tri)
 // ==============================
 export const getOffers = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -244,12 +243,12 @@ export const getMyOffers = async (
   res: Response
 ): Promise<void> => {
   try {
-    if (!req.user || !(req.user as any)._id) {
+    if (!req.user?._id) {
       res.status(401).json({ message: "Non autorisé" });
       return;
     }
 
-    const userId = (req.user as any)._id;
+    const userId = req.user._id;
     const offers = await Offer.find({ userId }).populate(
       "userId",
       "account.username account.avatar"

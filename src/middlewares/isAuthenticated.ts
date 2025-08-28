@@ -7,47 +7,35 @@ const isAuthenticated = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    // Vérifiez si le header Authorization est présent
-    const authorizationHeader = (req.headers as { authorization?: string })
-      .authorization;
-    if (!authorizationHeader) {
-      res.status(401).json({ message: "Unauthorized 🤟🏻" });
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      res.status(401).json({ message: "Unauthorized: missing token" });
       return;
     }
 
-    // Extraire et nettoyer le token
-    const token = authorizationHeader.replace("Bearer ", "");
+    const token = authHeader.replace("Bearer ", "").trim();
     if (!token) {
-      res.status(401).json({ message: "Unauthorized 🤟🏻" });
+      res.status(401).json({ message: "Unauthorized: invalid token" });
       return;
     }
 
-    // Cherchez l'utilisateur correspondant au token dans la base de données
-    const user = (await User.findOne({ token }).lean().exec()) as {
-      _id: string;
-      name?: string;
-      email?: string;
-    } | null; // Assurez-vous que votre modèle User a une propriété `token`.
-
+    const user = await User.findOne({ token }).lean();
     if (!user) {
-      res.status(401).json({ message: "Unauthorized 🙀" });
+      res.status(401).json({ message: "Unauthorized: user not found" });
       return;
     }
 
-    // Ajouter l'utilisateur au `req` pour une utilisation ultérieure
+    // Injection typée de l'utilisateur
     req.user = {
       _id: user._id.toString(),
-      name: user.name,
       email: user.email,
+      name: user.account?.username || undefined,
     };
 
-    // Passer au middleware ou contrôleur suivant
-    return next();
+    next();
   } catch (error) {
-    // Gérer les erreurs éventuelles
     console.error("Erreur dans isAuthenticated:", error);
-    res.status(500).json({ error: (error as Error).message });
-    return;
+    res.status(500).json({ message: "Erreur interne du serveur" });
   }
 };
 
