@@ -4,6 +4,7 @@ import {
   getOfferById,
   getOffers,
   getMyOffers,
+  getOfferByUserId,
   publishOffer,
   searchOffers,
   updateOffer,
@@ -12,12 +13,15 @@ import isAuthenticated from "../middlewares/isAuthenticated";
 
 const router = express.Router();
 
+// Routes publiques
 router.get("/offers", getOffers);
 router.get("/offers/search", searchOffers);
 router.get("/offers/:id", getOfferById);
+router.get("/offers/user/:userId", getOfferByUserId); // ✅ annonces publiques d’un utilisateur
 
+// Routes protégées
 router.post("/offers/publish", isAuthenticated, publishOffer);
-router.get("/offers/user", isAuthenticated, getMyOffers);
+router.get("/offers/user", isAuthenticated, getMyOffers); // ✅ mes annonces (auth)
 router.put("/offers/update/:id", isAuthenticated, updateOffer);
 router.delete("/offers/delete/:id", isAuthenticated, deleteOffer);
 

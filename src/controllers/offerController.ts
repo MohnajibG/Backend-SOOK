@@ -187,8 +187,7 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
 // ==============================
 export const searchOffers = async (
   req: Request,
-  res: Response,
-  next: NextFunction
+  res: Response
 ): Promise<void> => {
   const { keyword } = req.query;
 
@@ -238,7 +237,7 @@ export const getOfferById = async (
 };
 
 // ==============================
-// Get My Offers (user authentifié)
+// Get My Offers (auth requis)
 // ==============================
 export const getMyOffers = async (
   req: Request,
@@ -259,6 +258,37 @@ export const getMyOffers = async (
     res.status(200).json({ offers });
   } catch (error) {
     console.error("🔥 Erreur dans getMyOffers:", error);
+    res.status(500).json({ message: "Erreur interne du serveur." });
+  }
+};
+
+// ==============================
+// Get Offers By UserId (public)
+// ==============================
+export const getOfferByUserId = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const offers = await Offer.find({ userId }).populate(
+      "userId",
+      "account.username account.avatar"
+    );
+
+    if (!offers || offers.length === 0) {
+      res
+        .status(404)
+        .json({ message: "Aucune offre trouvée pour cet utilisateur." });
+      return;
+    }
+
+    res.status(200).json({ offers });
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des offres par userId:",
+      error
+    );
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
