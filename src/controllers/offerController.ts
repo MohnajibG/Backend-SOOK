@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import Offer from "../models/Offer";
-import { SortOrder } from "mongoose";
+import mongoose, { SortOrder } from "mongoose";
 
 // ==============================
 // Publish Offer
@@ -213,12 +213,16 @@ export const searchOffers = async (
 // ==============================
 // Get Offer By ID
 // ==============================
-export const getOfferById = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const getOfferById = async (req: Request, res: Response) => {
   try {
-    const offer = await Offer.findById(req.params.id).populate(
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ message: "ID d'offre invalide." });
+      return;
+    }
+
+    const offer = await Offer.findById(id).populate(
       "userId",
       "account.username account.avatar"
     );
