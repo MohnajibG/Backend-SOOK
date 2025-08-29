@@ -23,17 +23,7 @@ cloudinary.v2.config({
 
 const app = express();
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5174", // frontend local
-      "https://sooki.netlify.app", // frontend prod
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-  })
-);
+app.use(cors({ origin: "*" }));
 
 app.use(express.json());
 app.use(fileUpload({ useTempFiles: true }));
