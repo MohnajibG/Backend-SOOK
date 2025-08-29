@@ -87,10 +87,10 @@ export const updateOffer = async (
   try {
     const { id } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      res.status(400).json({ message: "ID d'offre invalide." });
-      return;
-    }
+    // if (!mongoose.Types.ObjectId.isValid(id)) {
+    //   res.status(400).json({ message: "ID d'offre invalide." });
+    //   return;
+    // }
 
     const {
       title,
@@ -145,10 +145,10 @@ export const deleteOffer = async (
   try {
     const { id } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      res.status(400).json({ message: "ID d'offre invalide." });
-      return;
-    }
+    // if (!mongoose.Types.ObjectId.isValid(id)) {
+    //   res.status(400).json({ message: "ID d'offre invalide." });
+    //   return;
+    // }
 
     const deletedOffer = await Offer.findOneAndDelete({
       _id: id,
@@ -240,10 +240,10 @@ export const getOfferById = async (
   try {
     const { id } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      res.status(400).json({ message: "ID d'offre invalide." });
-      return;
-    }
+    // if (!mongoose.Types.ObjectId.isValid(id)) {
+    //   res.status(400).json({ message: "ID d'offre invalide." });
+    //   return;
+    // }
 
     const offer = await Offer.findById(id).populate(
       "userId",
@@ -303,10 +303,10 @@ export const getOfferByUserId = async (
   try {
     const { userId } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      res.status(400).json({ message: "ID utilisateur invalide." });
-      return;
-    }
+    // if (!mongoose.Types.ObjectId.isValid(userId)) {
+    //   res.status(400).json({ message: "ID utilisateur invalide." });
+    //   return;
+    // }
 
     const offers = await Offer.find({ userId: userId.toString() }).populate(
       // ✅ .toString()
