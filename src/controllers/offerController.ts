@@ -265,6 +265,7 @@ export const getOfferById = async (
 // ==============================
 // Get My Offers (auth requis)
 // ==============================
+
 export const getMyOffers = async (
   req: AuthenticatedRequest,
   res: Response
@@ -277,12 +278,14 @@ export const getMyOffers = async (
 
     console.log("📌 getMyOffers - req.user :", req.user);
 
-    const userId = new mongoose.Types.ObjectId(req.user._id.toString()); // ✅ .toString()
-    const offers = await Offer.find({ userId }).populate(
+    const userId = new mongoose.Types.ObjectId(req.user._id.toString());
+
+    const offers = await Offer.find({ userId: userId }).populate(
       "userId",
       "account.username account.avatar"
     );
 
+    console.log(`✅ ${offers.length} offre(s) trouvée(s)`);
     res.status(200).json({ offers });
   } catch (error) {
     console.error("🔥 Erreur dans getMyOffers:", error);
