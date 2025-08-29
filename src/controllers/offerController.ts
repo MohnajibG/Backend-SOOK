@@ -4,9 +4,6 @@ import mongoose, { SortOrder } from "mongoose";
 import { AuthenticatedRequest } from "../types/types";
 
 // ==============================
-// Types
-
-// ==============================
 // Publish Offer
 // ==============================
 export const publishOffer = async (
@@ -52,7 +49,7 @@ export const publishOffer = async (
     }
 
     const newOffer = new Offer({
-      userId: new mongoose.Types.ObjectId(req.user._id),
+      userId: new mongoose.Types.ObjectId(req.user._id.toString()), // ✅ .toString()
       title,
       description,
       price: parsedPrice,
@@ -108,7 +105,7 @@ export const updateOffer = async (
     } = req.body;
 
     const updatedOffer = await Offer.findOneAndUpdate(
-      { _id: id, userId: req.user?._id }, // 🔒 sécurise : seul le propriétaire peut modifier
+      { _id: id, userId: req.user?._id.toString() }, // ✅ .toString()
       {
         title,
         description,
@@ -155,7 +152,7 @@ export const deleteOffer = async (
 
     const deletedOffer = await Offer.findOneAndDelete({
       _id: id,
-      userId: req.user?._id, // 🔒 sécurité : seul le créateur peut supprimer
+      userId: req.user?._id.toString(), // ✅ .toString()
     });
 
     if (!deletedOffer) {
@@ -280,7 +277,7 @@ export const getMyOffers = async (
 
     console.log("📌 getMyOffers - req.user :", req.user);
 
-    const userId = new mongoose.Types.ObjectId(req.user._id);
+    const userId = new mongoose.Types.ObjectId(req.user._id.toString()); // ✅ .toString()
     const offers = await Offer.find({ userId }).populate(
       "userId",
       "account.username account.avatar"
@@ -308,7 +305,8 @@ export const getOfferByUserId = async (
       return;
     }
 
-    const offers = await Offer.find({ userId }).populate(
+    const offers = await Offer.find({ userId: userId.toString() }).populate(
+      // ✅ .toString()
       "userId",
       "account.username account.avatar"
     );
