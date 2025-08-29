@@ -255,12 +255,10 @@ export const getMyOffers = async (
 
     // 🔑 conversion en ObjectId
     const userId = new mongoose.Types.ObjectId(req.user._id);
-
     const offers = await Offer.find({ userId }).populate(
       "userId",
       "account.username account.avatar"
     );
-
     res.status(200).json({ offers });
   } catch (error) {
     console.error("🔥 Erreur dans getMyOffers:", error);
