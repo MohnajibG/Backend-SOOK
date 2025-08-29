@@ -1,12 +1,16 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import Offer from "../models/Offer";
 import mongoose, { SortOrder } from "mongoose";
+import { AuthenticatedRequest } from "../types/types";
+
+// ==============================
+// Types
 
 // ==============================
 // Publish Offer
 // ==============================
 export const publishOffer = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -48,7 +52,7 @@ export const publishOffer = async (
     }
 
     const newOffer = new Offer({
-      userId: req.user._id,
+      userId: new mongoose.Types.ObjectId(req.user._id),
       title,
       description,
       price: parsedPrice,
@@ -71,7 +75,7 @@ export const publishOffer = async (
       .status(201)
       .json({ message: "Offre publiée avec succès.", offer: populatedOffer });
   } catch (error) {
-    console.error("Erreur lors de la publication de l'offre :", error);
+    console.error("🔥 Erreur lors de la publication de l'offre :", error);
     next(error);
   }
 };
@@ -80,11 +84,17 @@ export const publishOffer = async (
 // Update Offer
 // ==============================
 export const updateOffer = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
     const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ message: "ID d'offre invalide." });
+      return;
+    }
+
     const {
       title,
       description,
@@ -97,8 +107,8 @@ export const updateOffer = async (
       pictures,
     } = req.body;
 
-    const updatedOffer = await Offer.findByIdAndUpdate(
-      id,
+    const updatedOffer = await Offer.findOneAndUpdate(
+      { _id: id, userId: req.user?._id }, // 🔒 sécurise : seul le propriétaire peut modifier
       {
         title,
         description,
@@ -114,15 +124,16 @@ export const updateOffer = async (
     );
 
     if (!updatedOffer) {
-      res.status(404).json({ message: "Offre non trouvée." });
+      res.status(404).json({ message: "Offre non trouvée ou non autorisée." });
       return;
     }
 
-    res
-      .status(200)
-      .json({ message: "Offre mise à jour avec succès.", offer: updatedOffer });
+    res.status(200).json({
+      message: "Offre mise à jour avec succès.",
+      offer: updatedOffer,
+    });
   } catch (error) {
-    console.error("Erreur lors de la mise à jour de l'offre:", error);
+    console.error("🔥 Erreur lors de la mise à jour de l'offre:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
@@ -131,21 +142,30 @@ export const updateOffer = async (
 // Delete Offer
 // ==============================
 export const deleteOffer = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const deletedOffer = await Offer.findByIdAndDelete(id);
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ message: "ID d'offre invalide." });
+      return;
+    }
+
+    const deletedOffer = await Offer.findOneAndDelete({
+      _id: id,
+      userId: req.user?._id, // 🔒 sécurité : seul le créateur peut supprimer
+    });
 
     if (!deletedOffer) {
-      res.status(404).json({ message: "Offre non trouvée." });
+      res.status(404).json({ message: "Offre non trouvée ou non autorisée." });
       return;
     }
 
     res.status(200).json({ message: "Offre supprimée avec succès." });
   } catch (error) {
-    console.error("Erreur lors de la suppression de l'offre:", error);
+    console.error("🔥 Erreur lors de la suppression de l'offre:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
@@ -153,7 +173,10 @@ export const deleteOffer = async (
 // ==============================
 // Get All Offers (pagination & tri)
 // ==============================
-export const getOffers = async (req: Request, res: Response): Promise<void> => {
+export const getOffers = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
   try {
     const sortField = (req.query.sort as string) || "createdAt";
     const sortOrder: SortOrder = req.query.order === "asc" ? 1 : -1;
@@ -176,7 +199,7 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
       currentPage: page,
     });
   } catch (error) {
-    console.error("Erreur lors de la récupération des offres:", error);
+    console.error("🔥 Erreur lors de la récupération des offres:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
@@ -185,7 +208,7 @@ export const getOffers = async (req: Request, res: Response): Promise<void> => {
 // Search Offers
 // ==============================
 export const searchOffers = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   const { keyword } = req.query;
@@ -205,7 +228,7 @@ export const searchOffers = async (
 
     res.status(200).json({ offers });
   } catch (error) {
-    console.error("Erreur lors de la recherche des offres:", error);
+    console.error("🔥 Erreur lors de la recherche des offres:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
@@ -213,7 +236,10 @@ export const searchOffers = async (
 // ==============================
 // Get Offer By ID
 // ==============================
-export const getOfferById = async (req: Request, res: Response) => {
+export const getOfferById = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -234,7 +260,7 @@ export const getOfferById = async (req: Request, res: Response) => {
 
     res.status(200).json({ offer });
   } catch (error) {
-    console.error("Erreur lors de la récupération de l'offre:", error);
+    console.error("🔥 Erreur lors de la récupération de l'offre:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
@@ -243,7 +269,7 @@ export const getOfferById = async (req: Request, res: Response) => {
 // Get My Offers (auth requis)
 // ==============================
 export const getMyOffers = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -251,14 +277,15 @@ export const getMyOffers = async (
       res.status(401).json({ message: "Non autorisé" });
       return;
     }
-    console.log("req.user reçu :", req.user);
 
-    // 🔑 conversion en ObjectId
+    console.log("📌 getMyOffers - req.user :", req.user);
+
     const userId = new mongoose.Types.ObjectId(req.user._id);
     const offers = await Offer.find({ userId }).populate(
       "userId",
       "account.username account.avatar"
     );
+
     res.status(200).json({ offers });
   } catch (error) {
     console.error("🔥 Erreur dans getMyOffers:", error);
@@ -270,11 +297,17 @@ export const getMyOffers = async (
 // Get Offers By UserId (public)
 // ==============================
 export const getOfferByUserId = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
     const { userId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      res.status(400).json({ message: "ID utilisateur invalide." });
+      return;
+    }
+
     const offers = await Offer.find({ userId }).populate(
       "userId",
       "account.username account.avatar"
@@ -290,7 +323,7 @@ export const getOfferByUserId = async (
     res.status(200).json({ offers });
   } catch (error) {
     console.error(
-      "Erreur lors de la récupération des offres par userId:",
+      "🔥 Erreur lors de la récupération des offres par userId:",
       error
     );
     res.status(500).json({ message: "Erreur interne du serveur." });
