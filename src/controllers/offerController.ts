@@ -251,6 +251,7 @@ export const getMyOffers = async (
       res.status(401).json({ message: "Non autorisé" });
       return;
     }
+    console.log("req.user reçu :", req.user);
 
     // 🔑 conversion en ObjectId
     const userId = new mongoose.Types.ObjectId(req.user._id);
