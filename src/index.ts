@@ -12,6 +12,8 @@ import cloudinary from "cloudinary";
 import passport from "passport";
 import cartRoutes from "./routes/cartRoutes";
 
+require("dotenv").config();
+
 // Configuration Cloudinary
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
@@ -32,6 +34,7 @@ app.use(
     credentials: true,
   })
 );
+
 app.use(express.json());
 app.use(fileUpload({ useTempFiles: true }));
 app.use(passport.initialize());
@@ -43,11 +46,7 @@ app.use("/", cartRoutes);
 
 app.use(offerRoutes);
 
-require("dotenv").config();
-
 connectMongoDB();
-
-app.use(fileUpload());
 
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json("Welcome to SOOOOK!!!");
