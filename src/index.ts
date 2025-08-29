@@ -11,6 +11,7 @@ import fileUpload from "express-fileupload";
 import cloudinary from "cloudinary";
 import passport from "passport";
 import cartRoutes from "./routes/cartRoutes";
+import paymentRoutes from "./routes/paymentRoutes";
 
 require("dotenv").config();
 
@@ -32,6 +33,8 @@ app.use(passport.initialize());
 app.use("/user", userRoutes);
 app.use("/user", profileRoutes);
 app.use("/", cartRoutes);
+app.use("/payment", paymentRoutes);
+
 // app.use("/auth", googleAuthRoutes);
 
 app.use(offerRoutes);

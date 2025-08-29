@@ -499,6 +499,7 @@ __metadata:
     passport: ^0.7.0
     passport-google-oauth20: ^2.0.0
     socket.io: ^4.8.1
+    stripe: ^18.5.0
     ts-node: ^10.9.2
     typescript: ^5.7.3
     uid2: ^1.0.0
@@ -2578,6 +2579,20 @@ __metadata:
   dependencies:
     ansi-regex: ^6.0.1
   checksum: 859c73fcf27869c22a4e4d8c6acfe690064659e84bef9458aa6d13719d09ca88dcfd40cbf31fd0be63518ea1a643fe070b4827d353e09533a5b0b9fd4553d64d
+  languageName: node
+  linkType: hard
+
+"stripe@npm:^18.5.0":
+  version: 18.5.0
+  resolution: "stripe@npm:18.5.0"
+  dependencies:
+    qs: ^6.11.0
+  peerDependencies:
+    "@types/node": ">=12.x.x"
+  peerDependenciesMeta:
+    "@types/node":
+      optional: true
+  checksum: e71699e5511fab8cb16f4911f29c0f6b5174e3ee2e4a7213fc37705a947eea91fbd153180dad8d46492f388d035e5ed9784a7d3bb31e1804690ff5b7cbe874c0
   languageName: node
   linkType: hard
 
