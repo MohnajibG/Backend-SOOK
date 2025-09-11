@@ -16,6 +16,7 @@ import cloudinary from "cloudinary";
 import passport from "passport";
 import cartRoutes from "./routes/cartRoutes";
 import paymentRoutes from "./routes/paymentRoutes";
+import googleAuthRouter from "./routes/googleAuth";
 
 require("dotenv").config();
 
@@ -36,10 +37,10 @@ app.use(passport.initialize());
 
 app.use("/user", userRoutes);
 app.use("/user", profileRoutes);
-app.use("/", cartRoutes);
+app.use("/cart", cartRoutes);
 app.use("/payment", paymentRoutes);
 
-// app.use("/auth", googleAuthRoutes);
+app.use("/user", googleAuthRouter);
 
 app.use(offerRoutes);
 
@@ -49,7 +50,7 @@ app.get("/", (req: Request, res: Response) => {
   res.status(200).json("Welcome to SOOOOK!!!");
 });
 
-app.all("*", (req: Request, res: Response) => {
+app.use((req: Request, res: Response) => {
   res.status(404).json({ message: "404, on t'a dit" });
 });
 
