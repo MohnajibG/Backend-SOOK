@@ -18,7 +18,7 @@ router.get("/offers", getOffers);
 router.get("/offers/search", searchOffers);
 
 // ⚠️ ordre important
-router.get("/offers/user", isAuthenticated, getMyOffers); // mes annonces (auth)
+router.get("/offers/user", isAuthenticated, getMyOffers);
 router.get("/offers/user/:userId", getOfferByUserId);
 
 router.get("/offers/:id", getOfferById);
