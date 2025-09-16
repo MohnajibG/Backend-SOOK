@@ -16,11 +16,8 @@ const router = express.Router();
 // Routes publiques
 router.get("/offers", getOffers);
 router.get("/offers/search", searchOffers);
-
-// ⚠️ ordre important
 router.get("/offers/user", isAuthenticated, getMyOffers);
 router.get("/offers/user/:userId", getOfferByUserId);
-
 router.get("/offers/:id", getOfferById);
 
 // Routes protégées
