@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express, { Response, Request } from "express";
+import fileUpload from "express-fileupload";
 
 import connectMongoDB from "./config/db";
 
@@ -20,6 +21,9 @@ const app = express();
 app.use(cors({ origin: "*" }));
 
 app.use(express.json());
+// Nécessaire pour parser les requêtes multipart/form-data (ex: mise à jour
+// du profil), qui n'est pas géré par express.json().
+app.use(fileUpload({ useTempFiles: true }));
 
 app.use("/user", userRoutes);
 app.use("/user", profileRoutes);

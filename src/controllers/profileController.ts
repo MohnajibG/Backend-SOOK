@@ -34,11 +34,24 @@ export const updateProfile = async (
   } = req.body;
 
   // Validation minimale
-  if (!address || !phoneNumber || !country || !sexe || !dateOfBorn) {
+  if (
+    !address ||
+    !phoneNumber ||
+    !country ||
+    !sexe ||
+    !dateOfBorn ||
+    dateOfBorn === "undefined"
+  ) {
     res.status(400).json({
       message:
         "Tous les champs (adresse, téléphone, pays, sexe, date de naissance) sont requis.",
     });
+    return;
+  }
+
+  const parsedDateOfBorn = new Date(dateOfBorn);
+  if (Number.isNaN(parsedDateOfBorn.getTime())) {
+    res.status(400).json({ message: "Date de naissance invalide." });
     return;
   }
 
@@ -56,7 +69,7 @@ export const updateProfile = async (
       {
         $set: {
           "account.sexe": sexe,
-          "account.dateOfBorn": dateOfBorn,
+          "account.dateOfBorn": parsedDateOfBorn,
           "account.address": address,
           "account.postalCode": postalCode,
           "account.phoneNumber": phoneNumber,
@@ -80,6 +93,13 @@ export const updateProfile = async (
     });
   } catch (error) {
     console.error("Erreur lors de la mise à jour du profil :", error);
+    if (
+      error instanceof Error &&
+      (error.name === "ValidationError" || error.name === "CastError")
+    ) {
+      res.status(400).json({ message: "Données de profil invalides." });
+      return;
+    }
     res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
