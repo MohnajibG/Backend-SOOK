@@ -11,7 +11,6 @@ const isAuthenticated = async (
     const authorizationHeader = (req.headers as { authorization?: string })
       .authorization;
     if (!authorizationHeader) {
-      console.warn("⚠️ Aucun header Authorization reçu");
       res.status(401).json({ message: "Unauthorized 🤟🏻" });
       return;
     }
@@ -19,12 +18,9 @@ const isAuthenticated = async (
     // Extraire et nettoyer le token
     const token = authorizationHeader.replace("Bearer ", "").trim();
     if (!token) {
-      console.warn("⚠️ Token vide ou invalide");
       res.status(401).json({ message: "Unauthorized 🤟🏻" });
       return;
     }
-
-    console.log("🔑 Token reçu :", token);
 
     // Cherchez l'utilisateur correspondant au token dans la base de données
     const user = (await User.findOne({ token }).lean().exec()) as {
@@ -35,16 +31,9 @@ const isAuthenticated = async (
     } | null;
 
     if (!user) {
-      console.warn("❌ Aucun utilisateur trouvé avec ce token");
       res.status(401).json({ message: "Unauthorized 🙀" });
       return;
     }
-
-    console.log("✅ Utilisateur trouvé :", {
-      _id: user._id,
-      email: user.email,
-      username: user.account?.username,
-    });
 
     // Ajouter l'utilisateur au `req` pour une utilisation ultérieure
     req.user = {
@@ -52,8 +41,6 @@ const isAuthenticated = async (
       name: user.account?.username || user.name,
       email: user.email,
     };
-
-    console.log("📌 req.user injecté :", req.user);
 
     // Passer au middleware ou contrôleur suivant
     return next();

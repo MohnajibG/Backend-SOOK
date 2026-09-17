@@ -2,7 +2,6 @@ import express from "express";
 import {
   getUserProfile,
   updateProfile,
-  // uploadAvatar,
 } from "../controllers/profileController";
 import isAuthenticated from "../middlewares/isAuthenticated";
 const router = express.Router();

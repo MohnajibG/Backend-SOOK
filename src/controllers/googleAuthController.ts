@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import { OAuth2Client } from "google-auth-library";
+import uid2 from "uid2";
 import User, { UserDocument } from "../models/User";
-import jwt from "jsonwebtoken";
 
-const client = new OAuth2Client("sook-443123");
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const googleLogin = async (
   req: Request,
@@ -19,7 +19,7 @@ export const googleLogin = async (
 
     const ticket = await client.verifyIdToken({
       idToken: token,
-      audience: "sook-443123",
+      audience: process.env.GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
@@ -48,19 +48,17 @@ export const googleLogin = async (
         hash: "",
         salt: "",
       });
-
-      await user.save();
     }
 
-    const appToken = jwt.sign(
-      { userId: user._id, email: user.email },
-      process.env.JWT_SECRET as string,
-      { expiresIn: "7d" }
-    );
+    // Token d'authentification opaque, cohérent avec le login classique :
+    // c'est ce token que `isAuthenticated` recherche en base pour chaque
+    // requête sur les routes protégées.
+    user.token = uid2(32);
+    await user.save();
 
     res.status(200).json({
       userId: user._id,
-      token: appToken,
+      token: user.token,
       account: {
         username: user.account.username,
         sexe: user.account.sexe || null,

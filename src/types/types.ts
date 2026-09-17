@@ -1,6 +1,4 @@
 import { Request } from "express";
-import "express-fileupload";
-import { FileArray } from "express-fileupload";
 import { Document } from "mongoose";
 
 // ==============================
@@ -25,32 +23,6 @@ export interface SignupRequestBody {
 // ==============================
 export interface UpdateProfileParams {
   userId: string;
-}
-
-// ==============================
-// Express-FileUpload Typing
-// ==============================
-declare module "express-fileupload" {
-  interface UploadedFile {
-    name: string;
-    mv: {
-      (path: string, callback: (err: any) => void): void;
-      (path: string): Promise<void>;
-    };
-    mimetype: string;
-    size: number;
-    tempFilePath: string;
-  }
-
-  interface FileArray {
-    pictures?: UploadedFile | UploadedFile[];
-  }
-}
-
-declare module "express-serve-static-core" {
-  interface Request {
-    files?: FileArray;
-  }
 }
 
 // ==============================

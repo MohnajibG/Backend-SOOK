@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { OAuth2Client } from "google-auth-library";
 
 import uid2 from "uid2";
-import SHA256 from "crypto-js/sha256";
+import bcrypt from "bcryptjs";
+import SHA256 from "crypto-js/sha256"; // conservé pour vérifier les anciens comptes (pré-bcrypt)
 import User from "../models/User";
 import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 import { SignupRequestBody } from "../types/types";
@@ -75,15 +75,13 @@ export const signup = async (
     }
 
     // Génération des credentials
-    const salt = uid2(64);
-    const hash = SHA256(password + salt).toString();
+    const hash = await bcrypt.hash(password, 12);
     const token = uid2(64);
 
     const newUser = new User({
       email,
       account: { username },
       hash,
-      salt,
       token,
     });
     await newUser.save();
@@ -145,8 +143,21 @@ export const login = async (
       return;
     }
 
-    const hashedPassword = SHA256(password + user.salt).toString();
-    if (hashedPassword !== user.hash) {
+    let passwordMatches: boolean;
+
+    if (user.salt) {
+      // Compte créé avant le passage à bcrypt : on vérifie avec l'ancien
+      // schéma (SHA256 + salt), puis on migre le hash de façon transparente.
+      passwordMatches = SHA256(password + user.salt).toString() === user.hash;
+      if (passwordMatches) {
+        user.hash = await bcrypt.hash(password, 12);
+        user.salt = undefined;
+      }
+    } else {
+      passwordMatches = await bcrypt.compare(password, user.hash);
+    }
+
+    if (!passwordMatches) {
       res.status(401).json({ message: "Mot de passe incorrect." });
       return;
     }
@@ -164,33 +175,5 @@ export const login = async (
   } catch (error) {
     console.error("Erreur login:", error);
     res.status(500).json({ message: "Erreur interne du serveur." });
-  }
-};
-
-// ==============================
-// Vérification Google OAuth
-// ==============================
-const client = new OAuth2Client("sook-443123.apps.googleusercontent.com");
-
-export const verifyToken = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  const { token } = req.body;
-  if (!token) {
-    res.status(400).json({ message: "Token manquant." });
-    return;
-  }
-
-  try {
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: "sook-443123.apps.googleusercontent.com",
-    });
-    const payload = ticket.getPayload();
-    res.status(200).json({ user: payload });
-  } catch (error) {
-    console.error("Erreur verifyToken:", error);
-    res.status(401).json({ message: "Token invalide." });
   }
 };

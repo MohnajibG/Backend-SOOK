@@ -1,6 +1,8 @@
 // src/controllers/paymentController.ts
-import { Request, Response } from "express";
+import { Response } from "express";
 import Stripe from "stripe";
+import Cart from "../models/Cart";
+import { AuthenticatedRequest } from "../types/types";
 
 // ⚠️ Vérifie que STRIPE_SECRET_KEY est bien défini dans ton .env
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -14,19 +16,36 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 // ==============================
 // Créer un PaymentIntent
 // ==============================
-export const createPaymentIntent = async (req: Request, res: Response) => {
-  const { amount } = req.body; // ⚠️ montant attendu en CENTIMES (ex: 1000 = 10€)
-
-  console.log("💳 Requête de paiement reçue avec amount:", amount);
-
-  if (!amount || isNaN(amount)) {
-    res
-      .status(400)
-      .json({ error: "Le montant est requis et doit être un nombre valide." });
-    return;
-  }
-
+// Le montant n'est jamais accepté depuis le client : il est recalculé ici
+// à partir du panier réel de l'utilisateur authentifié, pour empêcher
+// toute falsification du prix côté navigateur.
+export const createPaymentIntent = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
   try {
+    const userId = req.user?._id;
+    if (!userId) {
+      res.status(401).json({ error: "Non autorisé." });
+      return;
+    }
+
+    const cartItems = await Cart.find({ userId });
+    if (cartItems.length === 0) {
+      res.status(400).json({ error: "Le panier est vide." });
+      return;
+    }
+
+    const amount = Math.round(
+      cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0) *
+        100
+    );
+
+    if (amount <= 0) {
+      res.status(400).json({ error: "Montant invalide." });
+      return;
+    }
+
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: "eur",

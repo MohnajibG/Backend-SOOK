@@ -218,7 +218,11 @@ export const searchOffers = async (
   }
 
   try {
-    const regex = new RegExp(keyword, "i");
+    // Échappe les caractères spéciaux de regex pour empêcher un pattern
+    // à backtracking catastrophique (ReDoS) et pour que la recherche
+    // traite le mot-clé comme du texte littéral.
+    const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(escapedKeyword, "i");
     const offers = await Offer.find({
       $or: [{ title: regex }, { description: regex }, { brand: regex }],
     }).populate("userId", "account.username account.avatar");
@@ -276,8 +280,6 @@ export const getMyOffers = async (
       return;
     }
 
-    console.log("📌 getMyOffers - req.user :", req.user);
-
     const userId = new mongoose.Types.ObjectId(req.user._id.toString());
 
     const offers = await Offer.find({ userId: userId }).populate(
@@ -285,7 +287,6 @@ export const getMyOffers = async (
       "account.username account.avatar"
     );
 
-    console.log(`✅ ${offers.length} offre(s) trouvée(s)`);
     res.status(200).json({ offers });
   } catch (error) {
     console.error("🔥 Erreur dans getMyOffers:", error);

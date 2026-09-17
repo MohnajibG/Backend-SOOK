@@ -5,6 +5,7 @@ export interface Cart {
   productId: string;
   name: string;
   price: number;
+  quantity: number;
 }
 
 export interface CartDocument extends Cart, Document {}
@@ -15,6 +16,7 @@ const CartSchema = new Schema<CartDocument>(
     productId: { type: String, required: true },
     name: { type: String, required: true },
     price: { type: Number, required: true },
+    quantity: { type: Number, required: true, default: 1, min: 1 },
   },
   { timestamps: true }
 );

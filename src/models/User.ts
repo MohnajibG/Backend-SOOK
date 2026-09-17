@@ -18,7 +18,9 @@ export interface UserProps {
   newsletter: boolean;
   token?: string;
   hash: string;
-  salt: string;
+  // Présent uniquement pour les comptes créés avant le passage à bcrypt
+  // (hash SHA256 + salt) ; absent pour les comptes bcrypt (salt intégré au hash).
+  salt?: string;
 }
 
 export interface UserDocument extends UserProps, Document {}
@@ -76,7 +78,7 @@ const UserSchema = new Schema<UserDocument>(
     newsletter: { type: Boolean, default: false },
     token: { type: String, default: null },
     hash: { type: String, required: true },
-    salt: { type: String, required: true },
+    salt: { type: String, default: null },
   },
   { timestamps: true }
 );
